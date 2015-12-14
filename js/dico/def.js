@@ -64,12 +64,37 @@ return {
     },
 
     fieldIsNumber: function(f){
-        var ft=f.type;
-        return ft===fts.int || ft===fts.dec || ft===fts.money;
+        return f.type===fts.int || f.type===fts.dec || f.type===fts.money;
     },/*
     fieldIsDateOrTime: function(fType){
         return fType===fts.date || fType===fts.datetime || fType===fts.time;
     },*/
+
+    fnSearch: function(uiModel, searchString){
+        var sfn = uiModel.fnSearch;
+        if(_.isFunction(sfn)){
+            return function(model){
+                return uiModel.fnSearch(model, searchString);
+            };
+        }else{
+            if(_.isArray(sfn)){
+                return function(model){
+                    var ln=sfn.length;
+                    for(var i=0;i<ln;i++){
+                        var fn=sfn[i];
+                        if(model.get(fn) && model.get(fn).toLowerCase().indexOf(searchString)>-1){
+                            return true;
+                        }
+                    }
+                    return false;
+                };
+            }else if(_.isString(sfn)){
+                return function(model){
+                    return model.get(fn) ? model.get(fn).toLowerCase().indexOf(searchString)>-1  : false;
+                };
+            }
+        }
+    },
 
     // get all "shallow" fields (no sub collections) from a UI model
     getFields: function (uiModel, fnFilter) {
@@ -155,15 +180,15 @@ return {
             });
             for(dataSetName in groups) {
                 nb=groups[dataSetName];
-                if(dataSetName==='undefined'){
+                if(_.isUndefined(dataSetName)){
                     lb = i18n.na;
                 }else if(dataSetName==='' || dataSetName==='null'){
                     lb = i18n.none;
                 }else if(f.type===fTypes.lov || f.type===fTypes.list){
                     if(f.list && f.list.length && f.list[0].icon){
-                        lb = Evol.Dico.lovTextNoPix(f, dataSetName);
+                        lb = Evol.Dico.lovItemTextNoPix(f, dataSetName);
                     }else{
-                        lb = Evol.Dico.lovText(f, dataSetName, Evol.hashLov, iconsPath);
+                        lb = Evol.Dico.lovItemText(f, dataSetName, Evol.hashLov, iconsPath);
                     }
                 }else{
                     lb = dataSetName;
@@ -181,6 +206,44 @@ return {
             //sizes: sizes
         };
         return { data: data, labels: labels};
+    },
+
+    sampleDatum: function(f, idx){
+        function char(idx){
+            return String.fromCharCode(97 + idx)+ String.fromCharCode(98 + idx)+ String.fromCharCode(99 + idx);
+        }
+        switch(f.type){
+            case fts.bool:
+                return true;
+            case fts.date:
+                return '2015-0'+(idx+1)+'-'+(idx+14);
+            case fts.datetime:
+                return '2015-04-23T17:15';
+            case fts.time:
+                return '14:30';
+            case fts.url:
+                return 'http://www.evolutility.org';
+            case fts.email:
+                return 'abc@abc.com';
+            case fts.int:
+                if(f.min){
+                    return f.min+5+(idx*2);
+                }
+                return idx;
+            case fts.dec:
+            case fts.money:
+                return (idx+1)*10.2;
+            case fts.lov:
+                if(f.list && f.list.length){
+                    if(idx<f.list.length){
+                        return  f.list[idx].id;
+                    }
+                    return  f.list[0].id;
+                }
+                break;
+            default:
+                return char(idx);
+        }
     }
 
 };

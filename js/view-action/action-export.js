@@ -9,10 +9,10 @@
 
 Evol.ViewAction.Export = function(){
 
-    var eUI = Evol.UI,
+    var dom = Evol.DOM,
         eDico = Evol.Dico,
         fts = Evol.Def.fieldTypes,
-        uiInput = eUI.input,
+        uiInput = dom.input,
         i18n = Evol.i18n,
         i18nXpt = i18n.export;
 
@@ -24,6 +24,7 @@ return Backbone.View.extend({
     events: {
         'change .evol-xpt-format': 'click_format',
         'change input, .evol-xpt-db': '_preview',
+        'change #xpt-header': '_preview',
         'click .evol-xpt-more': 'click_toggle_sel',
         'click button': 'click_button'
     },
@@ -54,7 +55,9 @@ return Backbone.View.extend({
             iMax = fields.length,
             useMore = iMax > 14;
 
-        h+='<div class="evol-xpt panel '+this.style+'"><div class="evol-xpt-form clearfix"><div class="evol-xpt-flds">'+
+        h+='<div class="evol-xpt panel '+this.style+'">'+
+            dom.panelHeader({label:this.getTitle()}, false)+
+            '<div class="evol-xpt-form clearfix"><div class="evol-xpt-flds">'+
             '<div><label>'+i18nXpt.xpFields+'</label></div>'+
             '<fieldset class="checkbox">';
 
@@ -75,6 +78,7 @@ return Backbone.View.extend({
             h+='</div>';
         }
         h+='</fieldset></div><div class="evol-xpt-para">';
+
         //##### export formats ########################################
         var fId = 'evol-xpt-format',
             formatsList = _.map(formats, function(format){
@@ -83,35 +87,39 @@ return Backbone.View.extend({
                         text: i18nXpt['format'+format]
                     };
                 });
-        h+='<label for="'+fId+'">'+i18nXpt.format+'</label>'+
-            uiInput.select(fId, '', 'evol-xpt-format', false, formatsList);
+        h+='<div class="evol-xptf"><div class="evol-xpt-format-hld"><label for="'+fId+'">'+i18nXpt.format+'</label>'+
+            uiInput.select(fId, '', 'evol-xpt-format', false, formatsList)+'</div>';
         fId = 'xptFLH';
         h+='<div class="evol-xpt-opts">'+
             //# field (shared b/w formats - header #######
             '<div class="evol-FLH clearfix">'+
-                '<label>'+uiInput.checkbox(fId, true)+i18nXpt.firstLine+'</label>'+
+                '<label class="evol-xpt-cb1">'+uiInput.checkbox(fId, true)+i18nXpt.firstLine+'</label>'+
+                uiInput.select('xpt-header', '', 'evol-xpt-header', false, [
+                    {id:'label', text:i18nXpt.headerLabels},
+                    {id:'attribute', text:i18nXpt.headerIds}
+                ])+
             //##### CSV, TAB - First line for field names #######
             '</div><div id="xptCSV" class="evol-xpt-opt">'+
                 //# field - separator
                 //# - csv - any separator #######
                 '<div data-id="csv2" class="evol-w120">'+
-                eUI.fieldLabel('separator', i18nXpt.separator)+
+                dom.fieldLabel('separator', i18nXpt.separator)+
                 uiInput.text('separator', ',', '0')+
                 '</div>'+
             '</div>';
         _.each(formats, function(f){
             h+='<div id="xpt'+f+'" style="display:none;"></div>';
         });
-        h+='</div>'+
+        h+='</div></div>'+
             //# Preview #######
-            '<label>'+i18nXpt.preview+'</label>'+
+            dom.html.clearer+'<label class="evol-xpt-pvl">'+i18nXpt.preview+'</label>'+
             // ## Samples
             '<textarea class="evol-xpt-val form-control"></textarea>'+
             '</div></div></div>'+
             // ## Download button
             '<div class="panel '+this.style +' evol-buttons form-actions">'+
-                eUI.button('cancel', i18n.tools.bCancel, 'btn-default')+
-                eUI.button('export', i18nXpt.DownloadEntity.replace('{0}', this.uiModel.namePlural), 'btn btn-primary')+
+                dom.button('cancel', i18n.tools.bCancel, 'btn-default')+
+                dom.button('export', i18nXpt.DownloadEntity.replace('{0}', this.uiModel.namePlural), 'btn btn-primary')+
             '</div>'+
             '</div>';
         return h;
@@ -133,7 +141,7 @@ return Backbone.View.extend({
         }
         var divOpts = this.$('#xpt' + xFormat).show()
             .siblings().hide();
-        eUI.showOrHide(divOpts.filter('.evol-FLH'), xFormat==='TAB' || xFormat==='CSV' || xFormat==='HTML');
+        dom.showOrHide(divOpts.filter('.evol-FLH'), xFormat==='TAB' || xFormat==='CSV' || xFormat==='HTML');
         return this;
     },
 
@@ -149,9 +157,9 @@ return Backbone.View.extend({
 
     getTitle: function(){
         if(this.many){
-            return i18n.getLabel('export.ExportMany', this.uiModel.namePlural);
+            return i18n.getLabel('export.exportMany', this.uiModel.namePlural);
         }else{
-            return i18n.getLabel('export.ExportOne', this.uiModel.name);
+            return i18n.getLabel('export.exportOne', this.uiModel.name);
         }
     },
 
@@ -183,6 +191,19 @@ return Backbone.View.extend({
                 }
             });
             var fMax = flds.length-1;
+            var fnLabel;
+            if (options.firstLineHeader) {
+                fnLabel = options.header==='label' ?
+                    function(f){
+                        var lbl=f.labelExport || f.label || f.id;
+                        if(lbl.indexOf(',')>-1){
+                            return '"' + lbl + '"';
+                        }
+                        return lbl;
+                    }:function(f){
+                        return f.attribute || f.id;
+                    };
+            }
             switch (params.format){
                 case 'CSV':
                 case 'TAB':
@@ -197,7 +218,7 @@ return Backbone.View.extend({
                             h+='ID'+sep;
                         }
                         _.each(flds, function(f, idx){
-                            h+=f.labelExport || f.label;
+                            h+=fnLabel(f);
                             if(idx<fMax){
                                 h+=sep;
                             }
@@ -241,7 +262,7 @@ return Backbone.View.extend({
                             h+='<th>ID</th>';
                         }
                         _.each(flds, function(f){
-                            h+='<th>'+f.label+'</th>';
+                            h+='<th>'+fnLabel(f)+'</th>';
                         });
                         h+='\n</tr>\n';
                     }
@@ -437,7 +458,7 @@ return Backbone.View.extend({
     },
 
     fieldHTML: function(id,label,text){
-        return eUI.fieldLabel(id, label) +
+        return dom.fieldLabel(id, label) +
             uiInput.text(id, text.replace(/ /g, '_'), null, 'xpt-mw300');
     },
 
@@ -465,6 +486,9 @@ return Backbone.View.extend({
             }
             if(v.format==='CSV' || v.format==='TAB' || v.format==='HTML'){
                 v.options.firstLineHeader = this.$('#xptFLH').prop('checked');
+                if(v.options.firstLineHeader){
+                    v.options.header = this.$('#xpt-header').val();
+                }
                 if(v.format==='TAB'){
                     delete v.options.separator;
                 }
@@ -518,6 +542,10 @@ return Backbone.View.extend({
     click_toggle_sel: function (evt) {
         $(evt.currentTarget).hide()
             .next().slideDown();
+    },
+
+    change_header: function(evt){
+        this._preview();
     },
 
     click_button: function (evt) {

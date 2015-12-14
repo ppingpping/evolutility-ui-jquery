@@ -57,7 +57,7 @@ Evol.ViewMany.List = Evol.View_Many.extend({
             bf = that.uiModel.fnBadge,
             link = (this.links!==false),
             ft = Evol.Def.fieldTypes,
-            input = Evol.UI.input;
+            input = Evol.DOM.input;
 
         h.push('<tr data-mid="'+model.id+'">');
         if(selectable){
@@ -107,8 +107,8 @@ Evol.ViewMany.List = Evol.View_Many.extend({
             (f.labelList || f.labelMany || f.label);
         if(f.sortable!==false){
             h+='<span class="evol-sort-icons" data-fid="'+f.id+'">'+
-                Evol.UI.icon('chevron-up')+//'sort-by-alphabet'
-                Evol.UI.icon('chevron-down')+//'sort-by-alphabet-alt'
+                Evol.DOM.icon('chevron-up')+//'sort-by-alphabet'
+                Evol.DOM.icon('chevron-down')+//'sort-by-alphabet-alt'
                 '</span>';
         }
         h+='</span></th>';
@@ -128,7 +128,8 @@ Evol.ViewMany.List = Evol.View_Many.extend({
         Evol.ViewMany.menuOne, 
         function(e){
             return e.children().eq(0);
-        }
+        },
+        true
     ),
 
     leaveItem: Evol.ViewMany.actionEvents.leaveItem,
@@ -147,6 +148,7 @@ Evol.ViewMany.List = Evol.View_Many.extend({
                 id: aid, 
                 mid: id, 
                 title: e.closest('tr').find('a>span').text(),
+                skipWarning: evt.shiftKey,
                 fnSuccess: function(escape){
                     tr.fadeOut(500, function(){
                         tr.remove();

@@ -22,30 +22,38 @@ Evol.ViewMany = {
     eventsMany: {
         'click .pagination>li': 'click_pagination',
         //'click .evol-field-label .glyphicon-wrench': 'click_customize',
-        'click .evol-actions>i': 'clickAction',
+        'click .evol-actions>i,.evol-actions-nxtTd>i': 'clickAction',
         'change .list-sel': 'click_selection',
         'change [data-id="cbxAll"]': 'click_checkall'
     },
 
     actionEvents: {
-        enterItem: function(icons, fnElem){
+        enterItem: function(icons, fnElem, isTd){
             return function(evt){
                 //evt.currentTarget).children().eq(0)
                 //$(evt.currentTarget).children().eq(0).append(
                 var e=$(evt.currentTarget);
+                var css="evol-actions";
+
                 if(fnElem){
                     e=fnElem(e);
                 }
+                if(isTd && e.width()<190){
+                    if(e.siblings().length>e.index()){
+                        e=e.next();
+                        css="evol-actions-nxtTd";
+                    }
+                }
                 e.append(
-                    '<div class="evol-actions">'+
+                    '<div class="'+css+'">'+
                     _.map(icons, function(i){
-                        return Evol.UI.iconId(i.id, i.type, i.icon);
+                        return Evol.DOM.iconId(i.id, i.type, i.icon);
                     }).join('')+
                     '</div>');
             };
         },
         leaveItem: function(evt){
-            $(evt.currentTarget).find('.evol-actions').remove();
+            $(evt.currentTarget).find('.evol-actions,.evol-actions-nxtTd').remove();
         }
     }
 
@@ -53,7 +61,7 @@ Evol.ViewMany = {
 
 Evol.View_Many = function() {
 
-    var eUI = Evol.UI,
+    var dom = Evol.DOM,
         eDico = Evol.Dico,
         i18n = Evol.i18n;
 
@@ -116,7 +124,7 @@ return Backbone.View.extend({
             models = eDico.filterModels(models, this._filter);
             this._render(models);
         } else {
-            this.$el.html(eUI.HTMLMsg(this.noDataString, '', 'info'));
+            this.$el.html(dom.HTMLMsg(this.noDataString, '', 'info'));
         }
         return this.setTitle();
     },
@@ -142,25 +150,20 @@ return Backbone.View.extend({
     },
 
     _HTMLField: function (f, v) {
-        var that=this,
-            fv;
         if(f.type==='formula'){
-            fv = '<div class="disabled evo-rdonly evol-ellipsis">';
+            var fv = '<div class="disabled evo-rdonly evol-ellipsis">';
             if(f.formula && this.model){
                 fv+=f.formula(this.model);
             }
             fv+='</div>';
+            return fv;
         }else{
-            fv = eDico.fieldHTML_RO(f, v, Evol.hashLov, this.iconsPath || '');
-            if (f.type === 'list') {
-                return _.escape(fv);
-            }
+            return eDico.fieldHTML_RO(f, v, Evol.hashLov, this.iconsPath || '');
         }
-        return fv;
     },
 
     _HTMLCheckbox: function (cid) {
-        return eUI.input.checkbox2(cid, false, 'list-sel');
+        return dom.input.checkbox2(cid, false, 'list-sel');
     },
     /*
      customize: function () {
@@ -168,7 +171,7 @@ return Backbone.View.extend({
          if(this._custOn){
             labels.find('i').remove();
          }else{
-            labels.append(eUI.iconCustomize('id', 'field'));
+            labels.append(dom.iconCustomize('id', 'field'));
          }
          this._custOn=!this._custOn;
          return this;
@@ -354,8 +357,6 @@ return Backbone.View.extend({
                 collec.comparator = eDico.bbComparatorText(f.id);
             }  else if (f.type === fts.formula) {
                 collec.comparator = eDico.bbComparatorFormula(f.id, f.formula);
-            } else if (f.value) {
-                collec.comparator = f.value;
             } else {
                 collec.comparator = eDico.bbComparator(f.id);
             }

@@ -35,7 +35,7 @@ Evol.i18n = {
         bMini: 'Mini', // 'Quick Edit'
         // Login: 'Login',
         bNew: 'New',
-        NewEntity: 'New {0}', //'New Item',
+        newEntity: 'New {0}', //'New Item',
         //NewUpload: 'New Upload',
         //Search: 'Search',
         //AdvSearch: 'Advanced Search',
@@ -43,6 +43,7 @@ Evol.i18n = {
         //Selections: 'Selections',
         //Selection: 'Selection',
         bExport: 'Export',
+        bImport: 'Import',
         bCharts: 'Charts',
         //SearchRes: 'Search Result',
         //MassUpdate: 'Mass Update',
@@ -88,8 +89,8 @@ Evol.i18n = {
     notFoundMsg: 'No {0} found.',
     notFoundMsgId: 'No {0} found for ID="{1}".',
 
-    NoChange: 'No Change',
-    NoX: 'No {0}',
+    //NoChange: 'No Change',
+    //NoX: 'No {0}',
     //Back2SearchResults: 'Back to search results',
     yes: 'Yes',
     no: 'No',
@@ -147,18 +148,18 @@ Evol.i18n = {
 
     // --- export ---
     export:{
-        ExportOne: 'Export {0}', // {0}=entity
-        ExportMany: 'Export {0}', // {0}=entities
+        exportOne: 'Export {0}', // {0}=entity
+        exportMany: 'Export {0}', // {0}=entities
         preview: 'Export preview',
         header: 'Header',
         options: 'options',
         separator: 'Separator',
-        firstLine: 'First line for field names',
+        firstLine: 'The first row is a header',
         format: 'Export format',
         xpFields: 'Fields to include in the export',
         IDkey: 'ID',
         allFields: 'Show all fields',
-        formatCSV: 'Comma separated (CSV, TXT, XLS...)',
+        formatCSV: 'Comma separated values (CSV, TXT, XLS...)',
         formatHTML: 'HTML',
         formatSQL: 'SQL Insert Statements (SQL)',
         formatTAB: 'Tab separated values (TXT)',
@@ -169,12 +170,26 @@ Evol.i18n = {
         XMLroot: 'Element name', // 'Root element name'
         //xpXMLAttr: 'Attributes',
         //xpXMLElem: 'Elements',
+        headerLabels: 'Field Labels',
+        headerIds: 'Field Attributes or Ids',
         db: 'Database',
         SQL: 'SQL Options',
         SQLTable: 'Table name',
         SQLTrans: 'In transaction',
         SQLIdInsert: 'Identity insert',
         DownloadEntity: 'Download {0}'
+    },
+
+    // --- import ---
+    import:{
+        importOne: 'Import {0}', // {0}=entity
+        importMany: 'Import {0}', // {0}=entities
+        format: 'Source Format',
+        fSample: 'Sample',
+        allowDups: 'Allow duplicates',
+        data: 'Data to Import',
+        success: 'Import done.',
+        empty: 'Nothing to Import.'
     },
 
     // --- filters ---

@@ -25,14 +25,23 @@ _.forEach([ 'browse', 'edit', 'mini', 'json'],function(vn){
 _.forEach([ 'list', 'cards', 'bubbles', 'charts'],function(vn){
     Evol.viewClasses[vn] =  Evol.ViewMany[Evol.Format.capitalize(vn)];
 });
-_.forEach([ 'filter', 'export'],function(vn){
+_.forEach([ 'filter', 'export', 'import'],function(vn){
     Evol.viewClasses[vn] =  Evol.ViewAction[Evol.Format.capitalize(vn)];
 });
+
+if(toastr){
+    toastr.options = {
+        hideDuration: 0,
+        //preventDuplicates: true,
+        closeButton: true,
+        progressBar: true
+    };
+}
 
 // toolbar widget which also acts as a controller for all views "one" and "many" as well as actions
 Evol.Toolbar = function() {
 
-    var eUI = Evol.UI,
+    var dom = Evol.DOM,
         i18n = Evol.i18n,
         i18nTool = i18n.tools;
 
@@ -43,8 +52,9 @@ return Backbone.View.extend({
         'navigate.many >div': 'click_navigate',
         'paginate.many >div': 'paginate',
         //'selection.many >div': 'click_select',
-        //'click .evo-search>.btn': 'click_search',
-        //'keyup .evo-search>input': 'key_search',
+        'click .evo-search>.btn': 'click_search',
+        'keyup .evo-search>input': 'key_search',
+        'click .evo-search>.clear-icon': 'clear_search',
         'change.tab >div': 'change_tab',
         'action >div': 'click_action',
         'status >div': 'status_update',
@@ -75,10 +85,15 @@ return Backbone.View.extend({
                 //{id:'browse', label: i18nTool.bBrowse, icon:'eye', n:'1', readonly:false},
                 {id:'edit', label: i18nTool.bEdit, icon:'edit', n:'1', readonly:false},
                 {id:'save', label: i18nTool.bSave, icon:'floppy-disk', n:'1', readonly:false},
-                {id:'del', label: i18nTool.bDelete, icon:'trash', n:'1', readonly:false},
-                {id:'filter', label: i18nTool.bFilter, icon:'filter',n:'n'},
-                {id:'export', label: i18nTool.bExport, icon:'cloud-download',n:'n'},
-                //{id:'cog',label: i18nTool.bSettings, icon:'cog',n:'n'}
+                {id:'del', label: i18nTool.bDelete, icon:'trash', n:'1', readonly:false}
+            ],
+            moreActions:[
+                {id:'filter', label: i18nTool.bFilter, icon:'filter', n:'n'},
+                {id:'-'},
+                {id:'export', label: i18nTool.bExport, icon:'cloud-download',n:'x'},
+                {id:'import', label: i18nTool.bImport, icon:'cloud-upload',n:'x'},
+                //{id:'-'},
+                //{id:'cog',label: 'Customize', icon:'cog',n:'x'}
             ],
             prevNext:[
                 {id:'prev', label: '', icon:'chevron-left', n:'x'},
@@ -97,7 +112,7 @@ return Backbone.View.extend({
                 {id:'bubbles', label: i18nTool.bBubbles, icon:'adjust',n:'n'},
                 {id:'charts', label: i18nTool.bCharts, icon:'stats',n:'n'}
             ],
-            search: false
+            search: true
         }
     },
 
@@ -119,13 +134,13 @@ return Backbone.View.extend({
         var h,
             isReadOnly=this.readonly!==false,
             that=this,
-            eUIm=eUI.menu,
+            domm=dom.menu,
             tb=this.buttons,
-            menuDevider='<li class="divider" data-cardi="1"></li>',
-            menuDeviderH='<li class="divider-h"></li>';
+            menuDivider='<li class="divider" data-cardi="x"></li>',
+            menuDividerH='<li class="divider-h"></li>';
 
         function menuItem (m, noLabel){
-            return eUIm.hItem(m.id, noLabel?'':m.label, m.icon, m.n);
+            return domm.hItem(m.id, noLabel?'':m.label, m.icon, m.n);
         }
         function menuItems (ms, noLabel){
             return _.map(ms, function(m){
@@ -137,36 +152,47 @@ return Backbone.View.extend({
         }
 
         h='<div class="evo-toolbar"><ul class="nav nav-pills pull-left" data-id="main">'+
-            menuItems(tb.always)+
-            menuDeviderH+
-            menuItems(tb.actions);
+            menuItems(tb.always)+menuDividerH;
+        h+=menuItems(tb.actions);
+        if(tb.moreActions && tb.moreActions.length){
+             h+=domm.hBegin('more','li','menu-hamburger', '', 'n');
+             _.each(tb.moreActions, function(m){
+                if(m.id==='-'){
+                    h+=menuDivider;
+                }else{
+                    h+=menuItem(m);
+                }
+            });
+            h+=domm.hEnd('li');
+        }
+        if(tb.search){
+            h+=menuDivider;
+            h+='<li><div class="input-group evo-search">'+
+                '<input class="evo-field form-control" type="text" maxlength="100" required>'+
+                '<div class="clear-icon glyphicon glyphicon-remove"></div>'+
+                '<span class="btn input-group-addon glyphicon glyphicon-search"></span>'+
+                '</div></li>';
+        }
         if(this.toolbar){
-            h+='</ul><ul class="nav nav-pills pull-right" data-id="views">'+
-                '<li class="evo-tb-status" data-cardi="n"></li>';
-            if(tb.search){
-                h+='<li><div class="input-group evo-search">'+
-                    '<input class="evo-field form-control" type="text" maxlength="100">'+
-                    '<span class="btn input-group-addon glyphicon glyphicon-search"></span>'+
-                    '</div></li>';
-            }
-            //h+=eUIm.hBegin('views','li','eye-open');
-            h+=menuItems(tb.prevNext)+
-                menuDeviderH+
+            h+='</ul><ul class="nav nav-pills pull-right" data-id="views">';
+            h+='<li class="evo-tb-status" data-cardi="n"></li>';
+            h+=menuItems(tb.prevNext);
+            //h+=domm.hBegin('views','li','eye-open');
+            h+=menuDividerH+
                 menuItems(tb.views, true);
-            //h+=menuDeviderH;
-            //h+=eUIm.hItem('customize','','wrench', 'x', 'Customize');
+            //h+=domm.hItem('customize','','wrench', 'x', 'Customize');
             /*
              if(this.buttons.customize){
                  h+=beginMenu('cust','wrench');
                  link2h('customize','Customize this view','wrench');
-                 h.push(menuDevider);
+                 h.push(menuDivider);
                  link2h('new-field','New Field','plus');
                  link2h('new-panel','New Panel','plus');
                  h+='</ul></li>';
              } */
 
         }
-        h+='</ul>'+eUI.html.clearer+'</div>';
+        h+='</ul>'+dom.html.clearer+'</div>';
         return h;
     },
 
@@ -281,6 +307,19 @@ return Backbone.View.extend({
                             config.sampleMaxSize = config.pageSize;
                             vw = new ViewClass(config).render();
                             break;
+                        case 'import':
+                            config = {
+                                el: $v,
+                                mode: viewName,
+                                uiModel: this.uiModel,
+                                collection: this.collection,
+                                style: this.style,
+                                titleSelector: this.titleSelector,
+                                router: this.router//,
+                                //iconsPath: this.iconsPath || ''
+                            };
+                            vw = new ViewClass(config).render();
+                            break;
                         // --- one --- browse, edit, mini, json, wiz
                         default :
                             var vwPrev = null,
@@ -365,7 +404,7 @@ return Backbone.View.extend({
             if(cbCancel){
                 cbs.cancel = cbCancel;
             }
-            eUI.modal.confirm(
+            dom.modal.confirm(
                 'isDirty',
                 i18n.unSavedTitle,
                 msg,
@@ -390,16 +429,18 @@ return Backbone.View.extend({
 
     getToolbarButtons: function(){
         if(!this._toolbarButtons){
-            var lis=this.$('.evo-toolbar li'),
-                vw=this.$('.evo-toolbar [data-id="views"]');
+            var $tb=this.$('.evo-toolbar'),
+            lis=$tb.find('>ul>li'),
+                vw=$tb.find('[data-id="views"]');
             this._toolbarButtons = {
                 ones: lis.filter('li[data-cardi="1"]'),
                 manys: lis.filter('li[data-cardi="n"]'),
                 edit: lis.filter('[data-id="main"]>[data-id="edit"]'),
                 del: lis.filter('[data-id="del"]'),
                 save: lis.filter('[data-id="save"]'),
-                prevNext: this.$('.evo-toolbar [data-id="prev"],.evo-toolbar [data-id="next"]'),
-                customize: this.$('.evo-toolbar a[data-id="customize"]').parent(),
+                prevNext: lis.filter('[data-id="prev"],[data-id="next"]'),
+                //customize: lis.filter('[data-id="customize"]').parent(),
+                more: lis.filter('[data-id="more"]'),
                 views: vw,
                 viewsIcon: this.$('.glyphicon-eye-open,.glyphicon-eye-close'),
                 vws: vw.find('ul>li>a')
@@ -409,7 +450,8 @@ return Backbone.View.extend({
     },
 
     setIcons: function(mode){
-        var showOrHide=eUI.showOrHide;
+        var showOrHide = dom.showOrHide,
+            importOrExport = mode==='export' || mode==='import';
 
         function oneMany(mode, showOne, showMany){
             showOrHide(tbBs.ones, showOne);
@@ -422,8 +464,9 @@ return Backbone.View.extend({
             var tbBs=this.getToolbarButtons();
             //showOrHide(tbBs.customize, mode!='json');
             tbBs.prevNext.hide();//.removeClass('disabled');
-            showOrHide(tbBs.views, !(mode==='export' ||mode=='new'));
+            showOrHide(tbBs.views, !(importOrExport || mode=='new'));
             tbBs.del.hide();
+
             if(Evol.Def.isViewMany(mode)){
                 this._prevViewMany=mode;
                 oneMany(mode, false, true);
@@ -432,7 +475,7 @@ return Backbone.View.extend({
                         pSize=this.curView.pageSize;
                     if(cSize > pSize){
                         tbBs.prevNext.show();/*
-                         // TODO finish disabling of paging buttons
+                         // TODO: finish disabling of paging buttons
                          // use ui.addRemClass
                          if(this.curView.pageIndex===0){
                             tbBs.prevNext.eq(0).addClass('disabled');
@@ -446,11 +489,12 @@ return Backbone.View.extend({
                          }*/
                     }
                 }
-            }else if((this.model && this.model.isNew()) || mode==='new' || mode==='export'){
+            }else if((this.model && this.model.isNew()) || mode==='new' || importOrExport){
                 oneMany(mode, false, false);
                 tbBs.del.hide();
                 tbBs.views.hide();
-                showOrHide(tbBs.save, mode!=='export');
+                showOrHide(tbBs.more, importOrExport);
+                showOrHide(tbBs.save, !importOrExport);
             }else{
                 this._prevViewOne=mode;
                 oneMany(mode, true, false);
@@ -458,7 +502,6 @@ return Backbone.View.extend({
                 showOrHide(tbBs.save, mode!=='browse');
                 showOrHide(tbBs.edit, mode==='browse');
             }
-            //showOrHide(tbBs.manys.filter('[data-id="group"]'), mode==='cards');
         }
     },
 
@@ -466,7 +509,7 @@ return Backbone.View.extend({
         if(!this._filters){
             if(orCreate){
                 var that=this,
-                    $ff=$(eUI.panelEmpty('filters', 'evo-filters', 'info'));
+                    $ff=$(dom.panelEmpty('filters', 'evo-filters', 'info'));
                 this.$('.evo-toolbar').after($ff);
                 this._filters = new Evol.ViewAction.Filter({
                     el: $ff,
@@ -495,20 +538,13 @@ return Backbone.View.extend({
     },
 
     _flagFilterIcon: function(fOn){
-        eUI.addRemClass(this.$('a[data-id="filter"]'), fOn, 'evo-filter-on');
+        dom.addRemClass(this.$('a[data-id="filter"]'), fOn, 'evo-filter-on');
     },
 
     toggleFilter: function(){
         this._filterOn=!this._filterOn;
         return this._filterOn?this.showFilter(true):this.hideFilter();
     },
-
-    /*
-     showGroup: function(){
-         this._group = true;
-         this.curView.showGroup();
-         return this;
-     },*/
 
     setData: function(data){
         if(this.curView){
@@ -539,7 +575,7 @@ return Backbone.View.extend({
                         that.setView(that.defaultViewOne);
                     }
                     that.curView.setModel(m);
-                    eUI.scroll2Top();
+                    dom.scroll2Top();
                 }
             },
             fnError = function(){
@@ -587,7 +623,7 @@ return Backbone.View.extend({
         if(cModel){
             this.setRoute(cModel?cModel.id:null, false);
         }else{
-            this.setMessage(i18n.notFound, i18n.getLabel('notFoundMsg', this.uiModel.name));
+            this.setMessage(i18n.notFound, i18n.getLabel('notFoundMsg', this.uiModel.name), 'error');
         }
         return this
             .clearMessage();
@@ -676,7 +712,7 @@ return Backbone.View.extend({
             }
         }
         return this.curView.setDefaults() //.clear()
-            .setTitle(i18n.getLabel('tools.NewEntity', this.uiModel.name, vw.getTitle()));
+            .setTitle(i18n.getLabel('tools.newEntity', this.uiModel.name, vw.getTitle()));
     },
 
     deleteItem: function(skipConfirmation, id, options){
@@ -689,6 +725,14 @@ return Backbone.View.extend({
         if(id || this.curView.cardinality==='1'){
             if(id){
                 this.setModelById(id, true);
+                var t=this.uiModel.fnTitle;
+                if(t && this.model){
+                    if(_.isString(t)){
+                        entityValue=this.model.get(t);
+                    }else{
+                        entityValue=t(that.model);
+                    }
+                }
             }
             fnSuccess = function(){
                 var collec=that.collection,
@@ -722,8 +766,8 @@ return Backbone.View.extend({
                                 that.curView.setModel(newModel);
                             }
                         }
-                        var eName=Evol.Format.capitalize(entityName);
-                        that.setMessage(i18n.getLabel('deleted1', eName), i18n.getLabel('msg.deleted', eName, entityValue), 'success');
+                        var eName= Evol.Format.capitalize(entityName);
+                        that.setMessage(i18n.getLabel('deleted1', eName), i18n.getLabel('msg.deleted', eName, entityValue), 'info');
                         if(options && options.fnSuccess){
                             options.fnSuccess();
                         }
@@ -744,7 +788,7 @@ return Backbone.View.extend({
                 if(skipConfirmation){
                     fnSuccess();
                 }else{
-                    eUI.modal.confirm(
+                    dom.modal.confirm(
                         'delete',
                         i18n.getLabel('deleteX', entityName),
                         i18n.getLabel('delete1', entityName, _.escape(entityValue)),
@@ -768,13 +812,13 @@ return Backbone.View.extend({
     },
 
     setMessage: function(title, content, style){
-        toastr.options.closeButton = true;
         toastr[style || 'info'](content, title);
         return this;
     },
 
     clearMessage: function(){
         this.$('[data-id="msg"]').remove();
+        toastr.clear();
         return this;
     },
 
@@ -837,12 +881,26 @@ return Backbone.View.extend({
                 break;
             case 'delete':
                 if(options.mid){
-                    this.deleteItem(false, options.mid, options);
+                    this.deleteItem(options.skipWarning, options.mid, options);
                 }
                 break;
             case 'save':
             case 'save-add':
                 this.saveItem(actionId==='save-add');
+                break;
+            case 'import':
+                var d = options.data;
+                var msg, style;
+                if(d && d.total){
+                    style = d.errors.length ? (d.inserts.length ? 'warning' : 'error') : 'success';
+                    msg = d.inserts + ' ' +  this.uiModel.name + ' added.';
+                    if(d.errors>0){
+                        msg += '<br>' + d.errors.length + ' Errors.';
+                    }
+                    this.setMessage(i18n.import.success, msg, style);
+                }else{
+                    this.setMessage(i18n.import.empty, '', 'warning');
+                }
                 break;
         }
     },
@@ -878,8 +936,8 @@ return Backbone.View.extend({
             pIdx=this.pageIndex||0,
             $item=this.$('[data-id="prev"]');
 
-        eUI.addRemClass($item, pIdx===0, cssDisabled);
-        eUI.addRemClass($item.next(), (pIdx+1)*this.pageSize>cl, cssDisabled);
+        dom.addRemClass($item, pIdx===0, cssDisabled);
+        dom.addRemClass($item.next(), (pIdx+1)*this.pageSize>cl, cssDisabled);
     },
 
     _enableNav: function(){
@@ -919,8 +977,8 @@ return Backbone.View.extend({
             $e=$e.closest('a');
         }
         var toolId=$e.data('id');
-        evt.preventDefault();
-        evt.stopImmediatePropagation();
+        //evt.preventDefault();
+        //evt.stopImmediatePropagation();
         switch(toolId){
             case 'save':
                 this.saveItem(false);
@@ -944,9 +1002,6 @@ return Backbone.View.extend({
                 break;/*
              case 'customize':
                  this.curView.customize();
-                 break;
-             case 'group':
-                 this.showGroup();
                  break;
              case 'new-field':
              case 'new-panel':
@@ -987,7 +1042,13 @@ return Backbone.View.extend({
         var fvs=this._filters.val(),
             collec;
         if(fvs.length){
-            var models=Evol.Dico.filterModels(this.model.collection.models, fvs);
+            var models;
+            if(this._searchString){
+                models=this._filteredCollection.models;
+            }else{
+                models=this.model.collection.models;
+            }
+            models=Evol.Dico.filterModels(models, fvs);
             if(this.collectionClass){
                 collec=new this.collectionClass(models);
             }else{
@@ -1005,49 +1066,57 @@ return Backbone.View.extend({
         this.curView.setCollection(collec);
         this.updateNav();
         this._trigger('filter.change');
-    }/*
+    },
     
     click_search: function(evt){
         var that=this,
-            searchString=$('.evo-search>input').val().toLowerCase(), 
-            searchFunction = function(sString){
-                return function(model){
-                    return that.uiModel.fnSearch(model, sString);
-                };
-            },
+            vSearch=this.$('.evo-search>input').val().toLowerCase(),
+            fnSearch = Evol.Def.fnSearch(this.uiModel, vSearch),
             collec;
 
-        this._searchString = searchString;
-        if(searchString){
+        this._searchString = vSearch;
+        if(vSearch){
             var models=(this.collection||this.model.collection).models
-                    .filter(searchFunction(searchString));
-                    //return that.uiModel.searchin(searchString);
+                    .filter(fnSearch);
             if(this.collectionClass){
-                collec=new this.collectionClass(models);
+                collec = new this.collectionClass(models);
             }else{
-                collec=new Backbone.Collection(models);
+                collec = new Backbone.Collection(models);
             }
-            this._filteredCollection=collec;
+            this._filteredCollection = collec;
         }else{
             collec=this.collection;
             this._filteredCollection=null;
         }
         this.updateStatus();
         this.pageIndex=0;
-        if(this.curView.setCollection){
-            this.curView.setCollection(collec);
-        }else{
-            this.curView.setModel(collec).get(0);
+        if(this.curView.viewType!=='many' && !this.curView.isChart){
+            this.setView('list', true);
         }
-        
+        this.curView.setCollection(collec);
         this.updateNav();
         this._trigger('search');
     },
 
     key_search: function(evt){
         if(evt.keyCode===13){
+            evt.preventDefault();
             this.click_search(evt);
         }
+    },
+
+    clear_search: function(evt){
+        var collec=this.collection;
+        this._filteredCollection=null;
+        this.updateStatus();
+        this.pageIndex=0;
+        if(this.curView.setCollection){
+            this.curView.setCollection(collec);
+        }
+        this._searchString = null;
+        this.$('.evo-search>input').val('').focus();
+        //this.updateNav();
+        //this._trigger('search');
     },
 
     click_selection: function(evt, ui){
@@ -1061,7 +1130,8 @@ return Backbone.View.extend({
             this.setStatus('');
             tbBs.del.hide();
         }
-    } */
+    }
+
 });
 
 }();

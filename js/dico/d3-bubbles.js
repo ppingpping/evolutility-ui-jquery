@@ -5,6 +5,8 @@ var Evol=Evol||{};
 
 Evol.Bubbles = function(){
 
+var fts = Evol.Def.fieldTypes;
+
 var Bubbles = function(opts){
     _.extend(this, opts);
     this.fieldsH={};
@@ -71,19 +73,37 @@ Bubbles.prototype.setData = function(data){
 
   this.nodes.enter().append("circle")
     .attr("class", "node")
+    .attr('data-mid', function (d) { return d.id;})
     .attr("cx", function (d) { 
       return d.x;
     })
-    .attr('data-mid', function (d) { return d.id;})
-    .attr("cy", function (d) { return d.y; })
-    .attr("r", function (d) { return d.radius; })
-    .style("fill", function (d) { return that.fill(d[that.colorFieldId]); })
+    .attr("cy", function (d) { 
+      return d.y; 
+    })
+    .attr("r", function (d) { 
+      return d.radius; 
+    })
+    .style("fill", function (d) { 
+      return that.fill(d[that.colorFieldId]); 
+    })
     .on("mouseenter", showPopover)
     .on("mouseleave", removePopovers)
     .on("click", removePopovers);
 
   this.nodes
-    .attr('data-mid', function (d) { return d.id;});
+    .attr('data-mid', function (d) { return d.id;})
+    .attr("cx", function (d) { 
+      return d.x;
+    })
+    .attr("cy", function (d) { 
+      return d.y; 
+    })
+    .attr("r", function (d) { 
+      return d.radius; 
+    })
+    .style("fill", function (d) { 
+      return that.fill(d[that.colorFieldId]); 
+    });
 
 
   this.nodes.exit().remove();
@@ -134,7 +154,7 @@ Bubbles.prototype.getCenters = function (fId, size, data) {
       _.forEach(centers, function(c){
         c.label=lovH[c.name]||na;
       });
-      centers=centers.sort(Evol.Dico.sortingText('label'));
+      centers=centers.sort(Evol.Dico.sortText('label'));
     }else if(f.type==='boolean'){
       _.forEach(centers, function(c){
         if(c.name===true){
@@ -146,7 +166,7 @@ Bubbles.prototype.getCenters = function (fId, size, data) {
         }
       });
     }else if(Evol.Def.fieldIsNumber(f)){
-      centers = centers.sort(Evol.Dico.sortingNumber('name'));
+      centers = centers.sort(Evol.Dico.sortNumber('name'));
       var c=_.findWhere(centers, {'name': null});
       if(c){
         c.label = na;

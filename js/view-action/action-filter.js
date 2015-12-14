@@ -10,8 +10,8 @@
 
 Evol.ViewAction.Filter = function(){
 
-    var eUI = Evol.UI,
-        uiInput = eUI.input,
+    var dom = Evol.DOM,
+        uiInput = dom.input,
         fts = Evol.Def.fieldTypes,
         evoLang = Evol.i18n.filters,
         fOps = {
@@ -77,7 +77,7 @@ return Backbone.View.extend({
             e=this.$el,
             h='';
 
-        h+=Evol.UI.html.buttonClose+'<div class="evo-zfilters"></div>'+
+        h+=dom.html.buttonClose+'<div class="evo-zfilters"></div>'+
             '<a class="evo-bNew btn btn-primary" href="javascript:void(0)">'+evoLang.bNewCond+'</a>';
         if(this.submitButton){
             h+='<a class="evo-bSubmit btn btn-primary" href="javascript:void(0)">'+evoLang.bSubmit+'</a>';
@@ -164,7 +164,7 @@ return Backbone.View.extend({
                 }
             }).on('click', '#checkAll', function(){
                 var $this=$(this);
-                eUI.toggleCheckbox($this.siblings(), $this.prop('checked'));
+                dom.toggleCheckbox($this.siblings(), $this.prop('checked'));
             });
         this._filters=e.find('.evo-zfilters').on('click', 'a', function(){
             that._editCond($(this));
@@ -183,7 +183,7 @@ return Backbone.View.extend({
     },
     /*
      _renderMenu: function(h){
-         var mn=eUI.menu;
+         var mn=dom.menu;
 
          h.push(
              mn.hBegin('file', 'div', 'cog'),
@@ -243,7 +243,7 @@ return Backbone.View.extend({
             h+='<span class="evo-lLight"> '+evoLang.opAnd+' </span>'+
                 '<span class="evo-lBold">'+filter.value.label2+'</span>';
         }
-        h+=eUI.html.buttonClose;
+        h+=dom.html.buttonClose;
         return h;
     },
 
@@ -353,9 +353,9 @@ return Backbone.View.extend({
                                 fOption(fOps.sSmaller, evoLang.sSmaller);
                             break;
                         default:
-                            h+=fOption(fOps.sEqual, evoLang.sEqual)+
+                            h+= fOption(fOps.sStart, evoLang.sStart)+
+                                fOption(fOps.sEqual, evoLang.sEqual)+
                                 fOption(fOps.sNotEqual, evoLang.sNotEqual)+
-                                fOption(fOps.sStart, evoLang.sStart)+
                                 fOption(fOps.sContain, evoLang.sContain)+
                                 fOption(fOps.sNotContain, evoLang.sNotContain)+
                                 fOption(fOps.sFinish, evoLang.sFinish);
@@ -389,7 +389,7 @@ return Backbone.View.extend({
                     switch (fType){
                         case fts.lov:// TODO use "section"?
                             h+='<section id="value">'+
-                                ((this._field.list.length>7)?'(<input type="checkbox" id="checkAll" value="1"/><label for="checkAll">All</label>) ':'')+
+                                ((this._field.list.length>7)?'(<input type="checkbox" id="checkAll" value="1"><label for="checkAll">All</label>) ':'')+
                                 uiInput.checkboxLOV(this._field.list)+
                                 '</section>';
                             break;
@@ -406,15 +406,15 @@ return Backbone.View.extend({
                         case fts.dec:
                         case fts.money:
                             var iType=(fType==fts.date)?'text':fType;
-                            h+='<input id="value" type="'+iType+'" class="form-control"/>';
+                            h+='<input id="value" type="'+iType+'" class="form-control">';
                             if(opBetween){
                                 h+='<span class="as-Txt">'+evoLang.opAnd+' </span>'+
-                                    '<input id="value2" type="'+iType+'" class="form-control"/>';
+                                    '<input id="value2" type="'+iType+'" class="form-control">';
                             }
                             addOK=false;
                             break;
                         default:
-                            h+='<input id="value" type="text" class="form-control"/>';
+                            h+='<input id="value" type="text" class="form-control">';
                             addOK=false;
                     }
                     editor.append(h);

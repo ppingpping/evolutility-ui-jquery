@@ -155,7 +155,7 @@
 .evo-title,.evo-title2{
   background-color: @color-header2;
   position: fixed;
-  z-index: 500;
+  z-index: 1001; // above bootstrap dropdown
   width: 100%;
   overflow: hidden;
   >h1{
@@ -212,9 +212,20 @@
   top:-140px;
 }
 
+@height-footer: 120px;
+.evo-page{
+  min-height: 100%;
+  margin-bottom: -@height-footer; 
+  &:after {
+    content: "";
+    display: block;
+  }
+}
+
 // --- footer ---
 .footer{
-  margin-top: 40px;
+  padding-top:80px;
+  height:@height-footer;
 	text-align: center;
 	font-size:smaller;
 	color:@color-text-footer;

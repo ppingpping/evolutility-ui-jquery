@@ -14,8 +14,8 @@ var Evol = Evol || {};
 // not a "virtual DOM" but an "abstract DOM"
 Evol.Dico = function(){
 
-    var eUI = Evol.UI,
-        uiInput = eUI.input,
+    var dom = Evol.DOM,
+        uiInput = dom.input,
         i18n = Evol.i18n,
         fts = Evol.Def.fieldTypes;
 
@@ -111,12 +111,12 @@ return {
 
     fieldHTML: function(fld, fid, fv, mode, iconsPath, skipLabel){
         var h='';
-        function getStyleHeight(f){
-            var fh = parseInt(f.height || 0, 10);
+        function emHeight(f){
+            var fh = parseInt(f.height || 2, 10);
             if(fh<2){
                 fh=2;
             }
-            return 'height:'+parseInt(fh*1.6, 10)+'em';
+            return parseInt(fh*1.6, 10);
         }
         // --- field label ---
         if(!skipLabel){
@@ -126,7 +126,7 @@ return {
         if(fld.readonly || mode==='browse'){
             h+='<div class="disabled evo-rdonly'+(fld.type===fts.email || fld.type===fts.url?' evol-ellipsis':'')+'" id="'+fid;
             if(fld.type===fts.textml && fld.height>1){
-                h+='" style="'+getStyleHeight(fld)+';overflow-y: auto;';
+                h+='" style="height:'+emHeight(fld)+'em;overflow-y: auto;';
             }
             h+='">';
             switch (fld.type) {
@@ -136,9 +136,6 @@ return {
                     break;
                 case fts.color: // TODO is the color switch necessary?
                     h+='<div id="'+fid+'" class="form-control">'+uiInput.colorBox(fid, fv)+'</div>';
-                    break;
-                case fts.textmultiline:
-                    h+='<div id="'+fid+'" class="form-control" style="'+height+'">'+_.escape(fv)+'</div>';
                     break;
                 default:
                     h+=this.fieldHTML_RO(fld, fv, {}, iconsPath);
@@ -158,31 +155,24 @@ return {
         switch(f.type){
             case fts.bool:
                 if (v==='true' || v=='1') {
-                    return eUI.icon('ok', f.css);
+                    return dom.icon('ok', f.css);
                 }
                 break;
             case fts.lov:
                 if (v !== '') {
-                    //if(f.icon && f.list & f.list[0].icon){
-                    //    return 'f.icon' + this._lovText(f,v);
-                    //}else{
-                    //return Evol.Dico.lovText(f, iconPath+v, hashLov);
-                    return Evol.Dico.lovText(f, v, hashLov, iconsPath);
-                    //}
+                    return Evol.Dico.lovItemText(f, v, hashLov, iconsPath);
                 }
                 break;
             case fts.list:
                 if(_.isString(v)){
-                    v= v.split(',');
+                    v = v.split(',');
                 }
-                if(v && v.length){
-                    var vs=[];
-                    _.each(v, function(vi){
-                        vs.push(Evol.Dico.lovText(f, vi, hashLov, iconsPath));
-                    });
-                    return vs.join(', ');
+                if(v && v.length && v[0]!==''){
+                    return '<div class="evo-f-list"><div>'+_.map(v, function(vi){
+                        return Evol.Dico.lovItemText(f, vi, hashLov, iconsPath);
+                    }).join('</div><div>')+'</div></div>';
                 }
-                return v;
+                return '';
             case fts.date:
             case fts.time:
             case fts.datetime:
@@ -200,9 +190,11 @@ return {
                 }
                 break;
             case fts.email:
-                return eUI.linkEmail(wId?f.id:null, v);
+                return dom.linkEmail(wId?f.id:null, v);
             case fts.url:
-                return eUI.link(f.id, v, v, f.id);
+                return dom.link(f.id, v, v, f.id);
+            case fts.json:
+                return dom.input.textM(f.id, Evol.Format.jsonString(v, false), f.maxLen, f.height, true);
             //case fts.color:
             //    return uiInput.colorBox(f.id, v, v);
             default:
@@ -214,10 +206,10 @@ return {
     HTMLFieldLabel: function (fld, mode) {
         var h='<div class="evol-field-label" id="'+fld.id+'-lbl"><label class="control-label '+(fld.cssLabel?fld.cssLabel:'')+'" for="'+fld.id+'">'+fld.label;
         if (mode != 'browse' && fld.required){
-            h+=eUI.html.required;
+            h+=dom.html.required;
         }
         if (fld.help && fld.help!==''){
-            h+=eUI.icon('question-sign', '');
+            h+=dom.icon('question-sign', '');
         }
         h+='</label></div>';
         return h;
@@ -276,7 +268,7 @@ return {
         }
     },
     // get field value (not id but text) for a field of type lov
-    lovText:function(f, v, hash, iconsPath){
+    lovItemText:function(f, v, hash, iconsPath, inDiv){
         if(f.list && f.list.length>0 && hash){
             if(!(f.id in hash)){
                 hash[f.id]={};
@@ -301,7 +293,7 @@ return {
         return '';
     },
 
-    lovTextNoPix:function(f, v){
+    lovItemTextNoPix:function(f, v){
         var listItem=_.find(f.list, function(item){
             return item.id==v;
         });
@@ -338,7 +330,7 @@ return {
          }
          //$el.closest('.evol-fld').after($elDesModal);
          $('body').append($elDesModal);
-         var $elDesModal=$(eUI.modal.HTMLModal('m'+id, 'Edit '+type+' '+ f.label, '<div class="'+css+'"></div>')),
+         var $elDesModal=$(dom.modal.HTMLModal('m'+id, 'Edit '+type+' '+ f.label, '<div class="'+css+'"></div>')),
          $elDes=$elDesModal.find('.'+css);
          var vw = new Evol.ViewOne.Edit({
              uiModel: uiModel,
@@ -395,23 +387,35 @@ return {
 */
     filterModels: function(models, filters){
         if(filters.length){
-            // TODO pre-build function to avoid repeating loop
+            var fConds=Evol.Dico.fieldConditions;
             return models.filter(function(model){
-                var want=true,
-                    fConds=Evol.Dico.fieldConditions;
-                for(var i= 0, iMax=filters.length;i<iMax && want;i++){
-                    if(want===false){
-                        break;
-                    }
+                var good=true;
+                for(var i=0, iMax=filters.length;i<iMax;i++){
                     var filter=filters[i],
-                        vm=model.get(filter.field.value);// TODO use field.value(m) || field.id
+                        vm=model.get(filter.field.value);
 
-                    if(_.isUndefined(vm)){
-                        vm='';
+                    if(_.isArray(vm)){
+                        var ln=vm.length,
+                            fGood=false;
+                        for(var j=0;j<ln;j++){
+                            if(fConds[filter.operator.value](vm[j], filter.value.value)){
+                                fGood=true;
+                                break;
+                            }
+                        }
+                        if(!fGood){
+                            return fGood;
+                        }
+                    }else{
+                        if(_.isUndefined(vm)){
+                            vm='';
+                        }
+                        if(!fConds[filter.operator.value](vm, filter.value.value, filter.value.value2)){
+                            return false;
+                        }
                     }
-                    want=fConds[filter.operator.value](vm, filter.value.value, filter.value.value2); // vf2 is only used in "between" conditions
                 }
-                return want;
+                return good;
             });
         }
         return models;
@@ -444,7 +448,7 @@ return {
         };
     },
 
-    sortingNumber: function(fid){
+    sortNumber: function(fid){
         return function(modelA, modelB) {
             if(modelA[fid]<modelB[fid]){
                 return 1;
@@ -456,7 +460,7 @@ return {
         };
     },
 
-    sortingText: function(fid){
+    sortText: function(fid){
         return function(modelA, modelB) {
             return (modelA[fid]||'').localeCompare(modelB[fid]||'');
         };
@@ -552,7 +556,17 @@ return {
         },
         // -- in []
         'in': function(fv, cv){
-            return  _.contains(cv.split(','),fv);
+            if(_.isArray(fv)){
+                var cvs=cv.split(',');
+                for(var i=0;i<fv.length;i++){
+                    if(_.contains(cvs, fv[i])){
+                        return true;
+                    }
+                }
+                return false;
+            }else{
+                return _.contains(cv.split(','), fv);
+            }
         },
         // -- true
         '1': function(fv, cv){
