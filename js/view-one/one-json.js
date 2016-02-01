@@ -5,7 +5,7 @@
  * View "one json" to edit one backbone model in JSON.
  *
  * https://github.com/evoluteur/evolutility
- * Copyright (c) 2015, Olivier Giulieri
+ * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
 
@@ -17,6 +17,7 @@ Evol.ViewOne.JSON = Evol.View_One.extend({
     },
 
     viewName: 'json',
+    icon: 'barcode', // glyphicon-barcode
 
     render: function () {
         var dom=Evol.DOM;

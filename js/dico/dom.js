@@ -3,7 +3,7 @@
  * evolutility :: dom.js
  *
  * https://github.com/evoluteur/evolutility
- * Copyright (c) 2015, Olivier Giulieri
+ * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
 
@@ -85,13 +85,14 @@ Evol.DOM = {
         textMJSON: function (id, fVobj, height, disabled) {
             return '<textarea id="'+id+'" rows="'+height+'" class="evol-json evo-field form-control"'+(disabled?' disabled':'')+'>'+
                     //_.escape(JSON.stringify(fVobj, null, '\t'))+
-                    JSON.stringify(fVobj, null)+
+                    Evol.Format.jsonString(fVobj, false)+
                 '</textarea>';
         },
         myType: function (type, id, value) {
             return '<input type="'+type+'" id="'+id+'" value="'+value+
                 '" class="evo-field form-control" size="15">';
         },
+
         date: function (id, value) {
             return this.myType('date', id, value);
             //+'&nbsp;<a href="javascript:ShowDatePicker(\'', id, '\');" class="ico Calendar"></a></nobr>'

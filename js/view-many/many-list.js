@@ -5,13 +5,14 @@
  * View "many list" to display a collection as a list (table w/ sorting and paging).
  *
  * https://github.com/evoluteur/evolutility
- * Copyright (c) 2015, Olivier Giulieri
+ * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
 
 Evol.ViewMany.List = Evol.View_Many.extend({
 
     viewName: 'list',
+    icon: 'th-list', // glyphicon-th-list
 
     events: _.extend({
         'mouseenter tbody>tr': 'enterItem',

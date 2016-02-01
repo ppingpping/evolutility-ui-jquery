@@ -5,13 +5,14 @@
  * View "one edit" to edit one backbone model.
  *
  * https://github.com/evoluteur/evolutility
- * Copyright (c) 2015, Olivier Giulieri
+ * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
 
 Evol.ViewOne.Edit = Evol.View_One.extend({
 
     viewName: 'edit',
+    icon: 'edit', // glyphicon-edit
     prefix: 'oe',
 
     postRender:function(){

@@ -5,7 +5,7 @@
  * Helpers for string manipulation and date formats
  *
  * https://github.com/evoluteur/evolutility
- * Copyright (c) 2015, Olivier Giulieri
+ * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
 
@@ -77,7 +77,8 @@ Evol.Format = {
         if(dd===''){
             return  dd;
         }else{
-            var txt=JSON.stringify(dd, null, '\t');
+            //var txt=JSON.stringify(dd, null, '\t');
+            var txt=JSON.stringify(dd, null, 2);
             if(cr2br){
                 txt=this.cr2br(txt);
             }

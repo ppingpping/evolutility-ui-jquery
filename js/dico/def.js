@@ -5,7 +5,7 @@
  * Library of helpers for metamodel
  *
  * https://github.com/evoluteur/evolutility
- * Copyright (c) 2015, Olivier Giulieri
+ * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
 
@@ -48,11 +48,15 @@ return {
         return viewName==='new' || viewName==='edit' || viewName==='browse' || viewName==='json';
     },*/
     isViewMany: function(viewName){
-        return viewName==='list' || viewName==='cards' || viewName==='charts' || viewName==='bubbles'|| viewName==='sunburst';
+        return this.isViewCollection(viewName) || this.isViewCharts(viewName);
     },
     
     isViewCollection: function(viewName){
         return viewName==='list' || viewName==='cards';
+    },
+
+    isViewCharts: function(viewName){
+        return viewName==='charts' || viewName==='bubbles' || viewName==='scatter' || viewName==='sunburst';
     },
 
     fieldInCharts: function (f) {

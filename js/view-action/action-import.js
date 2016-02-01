@@ -3,7 +3,7 @@
  * evolutility :: action-import.js
  *
  * https://github.com/evoluteur/evolutility
- * Copyright (c) 2015, Olivier Giulieri
+ * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
 
@@ -21,6 +21,7 @@ return Backbone.View.extend({
 
     viewName: 'import',
     cardinality: 'n',
+    icon: 'cloud-upload', // glyphicon-cloud-upload
 
     events: {
         'click button': 'click_button',
@@ -224,7 +225,7 @@ return Backbone.View.extend({
             h = JSON.stringify(sample, null, '\t');
         }else{
             var r=[];
-            for (p in sample[0]){
+            for (var p in sample[0]){
                 r.push(p);
             }
             h += r.join(',');

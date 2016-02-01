@@ -5,7 +5,7 @@
  * View "one browse" to browse one model in readonly mode.
  *
  * https://github.com/evoluteur/evolutility
- * Copyright (c) 2015, Olivier Giulieri
+ * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
 
@@ -13,6 +13,7 @@ Evol.ViewOne.Browse = Evol.View_One.extend({
 
     viewName: 'browse',
     editable: false,
+    icon: 'eye-open', // glyphicon-eye-open
     prefix: 'ovw',
 
     getData: function () {

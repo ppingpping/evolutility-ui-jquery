@@ -5,7 +5,7 @@
  * View "many charts" to display a collection as a set of charts.
  *
  * https://github.com/evoluteur/evolutility
- * Copyright (c) 2015, Olivier Giulieri
+ * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
 
@@ -21,6 +21,7 @@ var dom = Evol.DOM,
 return Evol.View_Many.extend({
 
     viewName: 'charts',
+    icon: 'stats', // glyphicon-stats
 
     isChart: true,
 

@@ -5,7 +5,7 @@
  * View "toolbar" (one toolbar instance manages all views for a UI model).
  *
  * https://github.com/evoluteur/evolutility
- * Copyright (c) 2015, Olivier Giulieri
+ * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
 
@@ -342,7 +342,7 @@ return Backbone.View.extend({
                     this.curView=vw;
                     this.viewsHash[viewName]=vw;
                     if(!skipIcons){
-                        $(this.titleSelector).html(vw.getTitle());
+                        this.setTitle();
                     }
                 }
             }
@@ -683,10 +683,10 @@ return Backbone.View.extend({
                 }
             }else{
                 // TODO fix bug w/ insert when filter applied => dup record
-                var updateModel = this.getData(true);
-                this.model.set(updateModel);
-                this.model.save({}, {
-                    //patch: true,
+                var updatedModel = this.getData(true);
+                this.model.set(updatedModel);
+                this.model.save(this.model.changedAttributes(), {
+                    patch: !this.model.isNew(),
                     success: function(m){
                         fnSuccess(m);
                         that.collection.set(m, {remove:false});

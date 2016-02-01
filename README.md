@@ -10,7 +10,10 @@ With it you can make web applications by configuring views with metadata instead
 [Wine Cellar](http://evoluteur.github.io/evolutility/demo/index.html#winecellar/list),
 [Graphic Novels](http://evoluteur.github.io/evolutility/demo/index.html#comics/cards).
 
-These demos use the browser local storage for their data but Evolutility can also be configured for REST (using [Evolutility-server](https://github.com/evoluteur/evolutility-server) or your own REST API). 
+These demos use the browser local storage to store data. 
+
+I'm still working on making Evolutility work with REST. 
+I started [Evolutility-server](https://github.com/evoluteur/evolutility-server) to work with Evolutility UI, but I'm now considering using [PostgREST](http://postgrest.com) instead. 
 
 ## Installation
 
@@ -224,12 +227,12 @@ var uiModels_comics = {
                     ]
                 },
                 {
-                    id: 'serieNb', attribute: 'serieNb', type: 'integer', 
+                    id: 'serie_nb', attribute: 'serie_nb', type: 'integer', 
                     label: 'Albums', width: 15, inMany: false,
                     inCharts: false 
                 },
                 {
-                    id: 'haveNb', attribute: 'haveNb', type: 'integer',
+                    id: 'have_nb', attribute: 'have_nb', type: 'integer',
                     label: 'Owned', width: 15, inMany: false, 
                     inCharts:false 
                 },
@@ -317,7 +320,7 @@ Evolutility.js is a re-write of [Evolutility] (http://www.evolutility.org) gener
 
 ## License
 
-Copyright (c) 2015 Olivier Giulieri.
+Copyright (c) 2016 Olivier Giulieri.
 
 Evolutility.js is released under the GNU Affero General Public License version 3 [GNU AGPLv3](http://www.gnu.org/licenses/agpl-3.0.html).
 
