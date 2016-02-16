@@ -101,16 +101,16 @@ return Backbone.View.extend({
             ],
             views: [
                 // -- views ONE ---
-                {id:'browse', label: i18nTool.bBrowse, icon:'eye-open',n:'1'},// // ReadOnly
-                {id:'edit', label: i18nTool.bEdit, icon:'edit',n:'1', readonly:false},// // All Fields for editing
-                {id:'mini', label: i18nTool.bMini, icon:'th-large',n:'1', readonly:false},// // Important Fields only
+                {id:'browse', label: i18nTool.bBrowse, icon:'eye-open', n:'1'},// // ReadOnly
+                {id:'edit', label: i18nTool.bEdit, icon:'edit', n:'1', readonly:false},// // All Fields for editing
+                {id:'mini', label: i18nTool.bMini, icon:'th-large', n:'1', readonly:false},// // Important Fields only
                 //{id:'wiz',label: i18nTool.bWizard, icon:'arrow-right',n:'1'},
-                {id:'json', label: i18nTool.bJSON, icon:'barcode',n:'1', readonly:false},
+                {id:'json', label: i18nTool.bJSON, icon:'barcode', n:'1', readonly:false},
                 // -- views MANY ---
-                {id:'list', label: i18nTool.bList, icon:'th-list',n:'n'},
-                {id:'cards', label: i18nTool.bCards, icon:'th-large',n:'n'},
-                {id:'bubbles', label: i18nTool.bBubbles, icon:'adjust',n:'n'},
-                {id:'charts', label: i18nTool.bCharts, icon:'stats',n:'n'}
+                {id:'list', label: i18nTool.bList, icon:'th-list', n:'n'},
+                {id:'cards', label: i18nTool.bCards, icon:'th-large', n:'n'},
+                {id:'bubbles', label: i18nTool.bBubbles, icon:'adjust', n:'n'},
+                {id:'charts', label: i18nTool.bCharts, icon:'stats', n:'n'}
             ],
             search: true
         }
@@ -664,29 +664,28 @@ return Backbone.View.extend({
 
         if(msgs.length===0){
             var entityName=this.uiModel.name;
-            if(_.isUndefined(this.model) || (this.model && this.model.isNew())){
-                var collec=this.collection;
-                if(collec){
-                    collec.create(this.getData(true), {
+            if(_.isUndefined(this.model) || (this.model && this.model.isNew())){ // CREATE
+                if(this.collection){
+                    this.collection.create(this.getData(true), {
                         success: function(m){
                             fnSuccess(m);
-                            //that.collection.set(m, {remove:false});
+                            that.setRoute(m.id, false);
                             that.setMessage(i18n.getLabel('saved', Evol.Format.capitalize(entityName)), i18n.getLabel('msg.added', entityName, _.escape(vw.getTitle())), 'success');
                         },
                         error:function(m, err){
-                            alert('error in "saveItem"');
+                            alert('Error in "saveItem"');
                         }
                     });
                     this.mode='edit';
                 }else{
                     alert('Can\'t save record b/c no collection is specified.'); //TODO use bootstrap modal
                 }
-            }else{
+            }else{ // UPDATE
                 // TODO fix bug w/ insert when filter applied => dup record
                 var updatedModel = this.getData(true);
                 this.model.set(updatedModel);
                 this.model.save(this.model.changedAttributes(), {
-                    patch: !this.model.isNew() && !Evol.Config.localStorage,
+                    patch: !Evol.Config.localStorage,
                     success: function(m){
                         fnSuccess(m);
                         that.collection.set(m, {remove:false});
@@ -726,7 +725,9 @@ return Backbone.View.extend({
 
         if(id || this.curView.cardinality==='1'){
             if(id){
-                this.setModelById(id, true);
+                //this.setModelById(id, true);
+                var mid=Evol.Config.localStorage?''+id:id; // using string or int
+                this.model=this.collection.findWhere({id: mid});
                 var t=this.uiModel.fnTitle;
                 if(t && this.model){
                     if(_.isString(t)){

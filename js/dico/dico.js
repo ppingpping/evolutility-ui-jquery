@@ -286,6 +286,12 @@ return {
                     return '';
                 }
                 break;
+            case fts.date:
+                var d=$f.val();
+                if(d.length===10){
+                    d+='T08:00:00.000Z';
+                }
+                return d;
             default:
                 return $f.val();
         }
@@ -545,7 +551,7 @@ return {
         },
         // -- start w/
         'sw': function(fv, cv){
-            return fv.toLocaleLowerCase().indexOf(cv)===0;
+            return fv.substring(0, cv.length).toLocaleLowerCase()===cv;
         },
         // -- contains
         'ct': function(fv, cv){
