@@ -1,6 +1,6 @@
-//  evolutility : many-cards.css
+//  Evolutility-UI-jQuery :: many-cards.css
 
-//  https://github.com/evoluteur/evolutility
+//  https://github.com/evoluteur/evolutility-ui-jquery
 //  Copyright (c) 2016 Olivier Giulieri
 
 /* --- cards --- */
@@ -17,10 +17,15 @@
     .border-radius(10px);
     overflow: auto;
 
-    >div>label{
-      vertical-align: top;
-      //text-align: right;
-      //min-width:80px;
+    >div {
+      >h4{
+        .ellipsis()
+      }
+      >label{
+        vertical-align: top;
+        //text-align: right;
+        //min-width:80px;
+      }
     }
   }
   .evol-c-center{

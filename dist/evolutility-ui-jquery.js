@@ -1,7 +1,7 @@
 /*!
-   evolutility 1.1.2 
+   evolutility-ui-jquery 1.2.0 
    (c) 2016 Olivier Giulieri 
-   http://evoluteur.github.io/evolutility/  
+   http://evoluteur.github.io/evolutility-ui-jquery/  
 */
 // default config for Evolutility UI
 
@@ -19,8 +19,8 @@ Evol.Config = {
 	//url: 'http://localhost:3001/'
 };
 ;
-//   Evolutility Localization Library ENGLISH
-//   https://github.com/evoluteur/evolutility
+//   Evolutility-UI-jQuery Localization Library ENGLISH
+//   https://github.com/evoluteur/evolutility-ui-jquery
 //   (c) 2015 Olivier Giulieri
 
 var Evol = Evol || {};
@@ -263,11 +263,11 @@ Evol.i18n = {
 ;
 /*! ***************************************************************************
  *
- * evolutility :: def.js
+ * evolutility-ui-jquery :: def.js
  *
  * Library of helpers for metamodel
  *
- * https://github.com/evoluteur/evolutility
+ * https://github.com/evoluteur/evolutility-ui-jquery
  * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
@@ -519,11 +519,11 @@ return {
 ;
 /*! ***************************************************************************
  *
- * evolutility :: format.js
+ * evolutility-ui-jquery :: format.js
  *
  * Helpers for string manipulation and date formats
  *
- * https://github.com/evoluteur/evolutility
+ * https://github.com/evoluteur/evolutility-ui-jquery
  * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
@@ -546,7 +546,7 @@ Evol.Format = {
         return '';
     },
     cr2br: function(v, escape){
-        if(v==='' || v===null){
+        if(v==='' || v===null || _.isUndefined(v)){
             return '';
         }
         var txt=escape?_.escape(v):v;
@@ -592,7 +592,13 @@ Evol.Format = {
 
     // --- JSON formats ---
     jsonString: function(d, cr2br){
-        var dd = (_.isString(d) && d!=='') ? $.parseJSON(d) : d;
+        var dd;
+        try{
+            dd=(_.isString(d) && d!=='') ? $.parseJSON(_.unescape(d)) : d;
+        }catch(err){
+            alert('Error: format.jsonString'+ err);
+            dd={"error": "Evol.Format.jsonString"};
+        }
         if(dd===''){
             return  dd;
         }else{
@@ -609,9 +615,9 @@ Evol.Format = {
 ;
 /*! ***************************************************************************
  *
- * evolutility :: dom.js
+ * evolutility-ui-jquery :: dom.js
  *
- * https://github.com/evoluteur/evolutility
+ * https://github.com/evoluteur/evolutility-ui-jquery
  * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
@@ -654,7 +660,7 @@ Evol.DOM = {
         },
         text: function (id, value, fd, css) {
             var h = '<input type="text" id="'+id;
-            if(value && value.indexOf('"')>-1){
+            if(value && _.isString(value)){
                 value=value.replace(/"/g,'\"');
             }
             h+='" value="'+value;
@@ -1028,9 +1034,9 @@ Evol.DOM = {
 
 /*! ***************************************************************************
  *
- * evolutility :: dom-charts.js
+ * evolutility-ui-jquery :: dom-charts.js
  *
- * https://github.com/evoluteur/evolutility
+ * https://github.com/evoluteur/evolutility-ui-jquery
  * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
@@ -1073,11 +1079,11 @@ Evol.DOM.Charts = {
 ;
 /*! ***************************************************************************
  *
- * evolutility :: dico.js
+ * evolutility-ui-jquery :: dico.js
  *
  * Library of helpers for dictionary
  *
- * https://github.com/evoluteur/evolutility
+ * https://github.com/evoluteur/evolutility-ui-jquery
  * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
@@ -1686,8 +1692,430 @@ return {
 
 }();
 ;
+/*! ***************************************************************************
+ *
+ * evolutility-ui-jquery :: many.js
+ *
+ * View "many" for other ViewMany views to inherit from.
+ *
+ * https://github.com/evoluteur/evolutility-ui-jquery
+ * Copyright (c) 2016 Olivier Giulieri
+ *
+ *************************************************************************** */
+
+var Evol = Evol || {};
+
+Evol.ViewMany = {
+
+    menuOne: [
+        //{id:'fav', type:null, icon:'star'},
+        {id:'edit', type:null, icon:'edit'},
+        {id:'delete',type: null, icon:'trash'}
+    ],
+    
+    eventsMany: {
+        'click .pagination>li': 'click_pagination',
+        //'click .evol-field-label .glyphicon-wrench': 'click_customize',
+        'click .evol-actions>i,.evol-actions-nxtTd>i': 'clickAction',
+        'change .list-sel': 'click_selection',
+        'change [data-id="cbxAll"]': 'click_checkall'
+    },
+
+    actionEvents: {
+        enterItem: function(icons, fnElem, isTd){
+            return function(evt){
+                //evt.currentTarget).children().eq(0)
+                //$(evt.currentTarget).children().eq(0).append(
+                var e=$(evt.currentTarget);
+                var css="evol-actions";
+
+                if(fnElem){
+                    e=fnElem(e);
+                }
+                if(isTd && e.width()<190){
+                    if(e.siblings().length>e.index()){
+                        e=e.next();
+                        css="evol-actions-nxtTd";
+                    }
+                }
+                e.append(
+                    '<div class="'+css+'">'+
+                    _.map(icons, function(i){
+                        return Evol.DOM.iconId(i.id, i.type, i.icon);
+                    }).join('')+
+                    '</div>');
+            };
+        },
+        leaveItem: function(evt){
+            $(evt.currentTarget).find('.evol-actions,.evol-actions-nxtTd').remove();
+        }
+    }
+
+};
+
+Evol.View_Many = function() {
+
+    var dom = Evol.DOM,
+        eDico = Evol.Dico,
+        i18n = Evol.i18n;
+
+return Backbone.View.extend({
+
+    viewName: 'Many',
+    viewType: 'many',
+    cardinality: 'n',
+
+    options: {
+        style: 'panel-default',
+        pageSize: 20,
+        pageIndex: 0,
+        autoUpdate: false,
+        // router: ...
+        //titleSelector: '#title',
+        //selectable: true,
+        //TODO: editable: false,
+        links: true,
+        noDataString: i18n.nodata, //'No data to display.',
+        iconsPath: 'pix/',
+        fieldsetFilter: function (f) {
+            return f.inMany;
+        }
+    },
+
+    events: Evol.ViewMany.eventsMany,
+
+    initialize: function (opts) {
+        var lastSort = localStorage.getItem(opts.uiModel.id + '-sort'),
+            that = this;
+
+        _.extend(this, this.options, opts);
+        this.mode = this.mode || '';
+        this._filter = [];
+        if (this.autoUpdate && this.collection) {
+            // TODO set later if not specified yet
+            this.collection.on('change', function () {
+                that.render();
+            });
+        }
+        if (!this.router) {
+            this.$el.on('click', '.evol-nav-id', function (evt) {
+                that.click_navigate(evt);
+            });
+        }
+        //this._custOn=false;
+        if (lastSort !== null) {
+            var ls = lastSort.split('-'),
+                f = this.getField(ls[0]);
+            if (ls.length > 1 && !_.isUndefined(f)) {
+                this.sortList(f, ls[1] === 'down', true, true);
+            }
+        }
+    },
+
+    render: function () {
+        var models = this.collection ? this.collection.models : null;
+        if (this.collection && this.collection.length) {
+            models = eDico.filterModels(models, this._filter);
+            this._render(models);
+        } else {
+            this.$el.html(dom.HTMLMsg(this.noDataString, '', 'info'));
+        }
+        return this.setTitle();
+    },
+
+    _HTMLbody: function (fields, pSize, icon, pageIdx, selectable) {
+        var h =[],
+            models = this.collection.models,
+            rMin = (pageIdx > 0) ? pageIdx * pSize : 0,
+            rMax = _.min([models.length, rMin + pSize]),
+            ico = icon ? (this.iconsPath || '') + icon : null;
+
+        if (rMax > 0) {
+            var route = this.getItemRoute();
+            for (var r = rMin; r < rMax; r++) {
+                this.HTMLItem(h, fields, models[r], ico, selectable, route);
+            }
+        }
+        return h.join('');
+    },
+
+    _render: function (models) {
+        alert('_render must be overridden');
+    },
+
+    _HTMLField: function (f, v) {
+        if(f.type==='formula'){
+            var fv = '<div class="disabled evo-rdonly evol-ellipsis">';
+            if(f.formula && this.model){
+                fv+=f.formula(this.model);
+            }
+            fv+='</div>';
+            return fv;
+        }else{
+            return eDico.fieldHTML_RO(f, v, Evol.hashLov, this.iconsPath || '');
+        }
+    },
+
+    _HTMLCheckbox: function (cid) {
+        return dom.input.checkbox2(cid, false, 'list-sel');
+    },
+    /*
+     customize: function () {
+         var labels = this.$('th>span');
+         if(this._custOn){
+            labels.find('i').remove();
+         }else{
+            labels.append(dom.iconCustomize('id', 'field'));
+         }
+         this._custOn=!this._custOn;
+         return this;
+     },*/
+
+    setCollection: function (collection) {
+        this.collection = collection;
+        return this.render();
+    },
+
+    getCollection: function () {
+        return this.collection;
+    },
+
+    setFilter: function (filter) {
+        this._filter = filter;
+        return this;
+    },
+
+    getFilter: function () {
+        return this._filter;
+    },
+
+    setTitle: function (title){
+        return eDico.setViewTitle(this, title||this.getTitle());
+    },
+
+    getTitle: function () {
+        // -- returns a string like "Contacts list"
+        return Evol.Format.capitalize(this.uiModel.namePlural) + ' ' + this.viewName;
+    },
+
+    getFields: function () {
+        if (!this._fields) {
+            this._fields = Evol.Def.getFields(this.uiModel, this.fieldsetFilter);
+            this._fieldHash = {};
+            var fh = this._fieldHash;
+            _.each(this._fields, function (f) {
+                fh[f.id] = f;
+            });
+        }
+        return this._fields;
+    },
+
+    getField: function (fid) {
+        if (!this._fieldHash) {
+            this.getFields();
+        }
+        return this._fieldHash[fid];
+    },
+
+    setPage: function (pageIdx) {
+        var h = [],
+            fields = this.getFields(),
+            pSize = this.pageSize,
+            collecLength = this.collection.length,
+            pSummary = this._pageSummary(pageIdx, pSize, collecLength);
+
+        this._$body().html(this._HTMLbody(fields, pSize, this.uiModel.icon, pageIdx, this.selectable));
+        this.$('.evo-pagination').html(this._HTMLpaginationBody(pageIdx, pSize, collecLength));
+        this.$('.evo-many-summary').html(pSummary);
+        this.pageIndex = pageIdx;
+        this.$el.trigger('status', pSummary);
+        return this;
+    },
+
+    getPage: function () {
+        return this.pageIndex;
+    },
+
+    _$Selection: function () {
+        return this.$('.list-sel:checked').not('[data-id="cbxAll"]');
+    },
+
+    getSelection: function () {
+        if (this.selectable) {
+            return _.map(this._$Selection().toArray(), function (cbx) {
+                return $(cbx).data('id');
+            });
+        }
+        return [];
+    },
+
+    setSelection: function (sel) {
+        // - param: sel = array of ids like ['1','2']
+        if (this.selectable && sel.length > 0) {
+            // TODO optimize and uncheck prev checked
+            var selector = [];
+            _.each(sel, function (id) {
+                selector.push('[data-mid=' + id + '] .list-sel');
+            });
+            this.$(selector.join(',')).prop('checked', true);
+        }
+        return this;
+    },
+
+    pageSummary: function(){
+        return this._pageSummary(this.pageIndex, this.pageSize, this.collection.length);
+    },
+
+    _pageSummary: function (pIdx, pSize, cSize) {
+        if (cSize === 0) {
+            return '';
+        } else if (cSize === 1) {
+            return cSize + ' ' + this.uiModel.name;
+        } else if (pSize >= cSize) {
+            return cSize + ' ' + this.uiModel.namePlural;
+        } else {
+            var rangeBegin = (pIdx || 0) * pSize + 1, rangeEnd;
+            if (pIdx < 1) {
+                rangeEnd = _.min([pSize, cSize]);
+            } else {
+                rangeEnd = _.min([rangeBegin + pSize - 1, cSize]);
+            }
+            return i18n.range
+                .replace('{0}', rangeBegin)
+                .replace('{1}', rangeEnd)
+                .replace('{2}', cSize)
+                .replace('{3}', this.uiModel.namePlural);
+        }
+    },
+
+    _HTMLpagination: function (pIdx, pSize, cSize) {
+        if (cSize > pSize) {
+            return '<ul class="evo-pagination pagination pagination-sm">'+
+                this._HTMLpaginationBody(pIdx, pSize, cSize)+
+                '</ul>';
+        }
+        return '';
+    },
+
+    _HTMLpaginationBody: function (pIdx, pSize, cSize) {
+        var h='';
+        if (cSize > pSize) {
+            var nbPages = Math.ceil(cSize / pSize),
+                pId = pIdx + 1,
+                maxRange,
+                bPage = function(id){
+                    h+='<li'+(pId===id?' class="active"':'')+
+                        ' data-id="'+id+'"><a href="javascript:void(0)">'+id+'</a></li>';
+                },
+                bPageRange = function(pStart, pEnd){
+                    for (var i=pStart; i<=pEnd; i++) {
+                        bPage(i);
+                    }
+                },
+                bGap = function(){
+                    h+='<li class="disabled"><a href="javascript:void(0)">...</a></li>';
+                };
+            h+='<li data-id="prev"'+
+                ((pId===1)?' class="disabled"':'')+
+                '><a href="javascript:void(0)">&laquo;</a></li>';
+            bPage(1);
+            if(pId>4 && nbPages>6){
+                if(pId===5){
+                    bPage(2);
+                }else{
+                    bGap();
+                }
+                maxRange=_.min([pId+2, nbPages]);
+                bPageRange(_.max([2, pId-2]), maxRange);
+            }else{
+                maxRange=_.min([_.max([5, pId+2]), nbPages]);
+                bPageRange(2, maxRange);
+            }
+            if(maxRange<nbPages && pId+2<nbPages){
+                bGap();
+                bPage(nbPages);
+            }
+            h+='<li data-id="next"'+
+                ((nbPages > pId) ? '' : ' class="disabled"')+
+                '><a href="javascript:void(0)">&raquo;</a></li>';
+        }
+        return h;
+    },
+
+    sortList: function (f, down, noRemember, noTrigger) {
+        var collec = this.collection,
+            fts = Evol.Def.fieldTypes;
+        if (!_.isUndefined(collec)) {
+            var sel = this.getSelection();
+            if (f.type == fts.text || f.type == fts.textml || f.type == fts.email) {
+                collec.comparator = eDico.bbComparatorText(f.id);
+            }  else if (f.type === fts.formula) {
+                collec.comparator = eDico.bbComparatorFormula(f.id, f.formula);
+            } else {
+                collec.comparator = eDico.bbComparator(f.id);
+            }
+            collec.sort();
+            if (down) {
+                collec.models.reverse();
+            }
+            this.setPage(0);
+            var direction = down ? 'down' : 'up';
+            if (!noRemember) {
+                localStorage.setItem(this.uiModel.id + '-sort', f.id + '-' + direction);
+            }
+            this.setSelection(sel);
+            if (!noTrigger) {
+                this.$el.trigger('sort.many', {id: f.id, direction: direction});
+            }
+        }
+        return this;
+    },
+
+    getItemRoute: function () {
+        if (this.router) {
+            return '#' + this.uiModel.id + '/browse/';
+        }
+        return null;
+    },
+
+    click_navigate: function (evt) {
+        var id = $(evt.currentTarget).closest('[data-mid]').data('mid');
+        evt.type = 'navigate.many';
+        this.$el.trigger(evt, {id: id});
+    },
+
+    click_pagination: function (evt) {
+        this.$el.trigger('paginate.many', {id: $(evt.currentTarget).closest('li').data('id')});
+    },
+    /*
+     click_customize: function (evt) {
+         var $e=$(evt.currentTarget),
+             id=$e.data('id'),
+             eType=$e.data('type');
+
+         eDico.showDesigner(id, eType, $e);
+         this.$el.trigger(eType+'.customize', {id: id, type:eType});
+     },
+     */
+    click_selection: function (evt) {
+        //if($(evt.currentTarget).data('id')!=='cbxAll'){
+        this.$el.trigger('selection.many');
+        //}
+    },
+
+    click_checkall: function (evt) {
+        var isChecked = this.$('[data-id="cbxAll"]').prop('checked');
+        //this.$('.list-sel:checked').not('[data-id="cbxAll"]');
+        this.$('.list-sel').prop('checked', isChecked);
+        this.$el.trigger('selection.many');
+    }
+
+});
+
+}();
+;
 // Original code and blog post by Steve Hall http://www.delimited.io/blog/2013/12/19/force-bubble-charts-in-d3
-// Modified for Evolutility by Olivier Giulieri http://evoluteur.github.io/evolutility/
+// Modified for Evolutility-UI-jQuery http://evoluteur.github.io/evolutility-ui-jquery/
 
 var Evol=Evol||{};
 
@@ -1988,433 +2416,11 @@ return Bubbles;
 ;
 /*! ***************************************************************************
  *
- * evolutility :: many.js
- *
- * View "many" for other ViewMany views to inherit from.
- *
- * https://github.com/evoluteur/evolutility
- * Copyright (c) 2016 Olivier Giulieri
- *
- *************************************************************************** */
-
-var Evol = Evol || {};
-
-Evol.ViewMany = {
-
-    menuOne: [
-        //{id:'fav', type:null, icon:'star'},
-        {id:'edit', type:null, icon:'edit'},
-        {id:'delete',type: null, icon:'trash'}
-    ],
-    
-    eventsMany: {
-        'click .pagination>li': 'click_pagination',
-        //'click .evol-field-label .glyphicon-wrench': 'click_customize',
-        'click .evol-actions>i,.evol-actions-nxtTd>i': 'clickAction',
-        'change .list-sel': 'click_selection',
-        'change [data-id="cbxAll"]': 'click_checkall'
-    },
-
-    actionEvents: {
-        enterItem: function(icons, fnElem, isTd){
-            return function(evt){
-                //evt.currentTarget).children().eq(0)
-                //$(evt.currentTarget).children().eq(0).append(
-                var e=$(evt.currentTarget);
-                var css="evol-actions";
-
-                if(fnElem){
-                    e=fnElem(e);
-                }
-                if(isTd && e.width()<190){
-                    if(e.siblings().length>e.index()){
-                        e=e.next();
-                        css="evol-actions-nxtTd";
-                    }
-                }
-                e.append(
-                    '<div class="'+css+'">'+
-                    _.map(icons, function(i){
-                        return Evol.DOM.iconId(i.id, i.type, i.icon);
-                    }).join('')+
-                    '</div>');
-            };
-        },
-        leaveItem: function(evt){
-            $(evt.currentTarget).find('.evol-actions,.evol-actions-nxtTd').remove();
-        }
-    }
-
-};
-
-Evol.View_Many = function() {
-
-    var dom = Evol.DOM,
-        eDico = Evol.Dico,
-        i18n = Evol.i18n;
-
-return Backbone.View.extend({
-
-    viewName: 'Many',
-    viewType: 'many',
-    cardinality: 'n',
-
-    options: {
-        style: 'panel-default',
-        pageSize: 20,
-        pageIndex: 0,
-        autoUpdate: false,
-        // router: ...
-        //titleSelector: '#title',
-        //selectable: true,
-        //TODO: editable: false,
-        links: true,
-        noDataString: i18n.nodata, //'No data to display.',
-        iconsPath: 'pix/',
-        fieldsetFilter: function (f) {
-            return f.inMany;
-        }
-    },
-
-    events: Evol.ViewMany.eventsMany,
-
-    initialize: function (opts) {
-        var lastSort = localStorage.getItem(opts.uiModel.id + '-sort'),
-            that = this;
-
-        _.extend(this, this.options, opts);
-        this.mode = this.mode || '';
-        this._filter = [];
-        if (this.autoUpdate && this.collection) {
-            // TODO set later if not specified yet
-            this.collection.on('change', function () {
-                that.render();
-            });
-        }
-        if (!this.router) {
-            this.$el.on('click', '.evol-nav-id', function (evt) {
-                that.click_navigate(evt);
-            });
-        }
-        //this._custOn=false;
-        if (lastSort !== null) {
-            var ls = lastSort.split('-'),
-                f = this.getField(ls[0]);
-            if (ls.length > 1 && !_.isUndefined(f)) {
-                this.sortList(f, ls[1] === 'down', true, true);
-            }
-        }
-    },
-
-    render: function () {
-        var models = this.collection.models;
-        if (this.collection.length) {
-            models = eDico.filterModels(models, this._filter);
-            this._render(models);
-        } else {
-            this.$el.html(dom.HTMLMsg(this.noDataString, '', 'info'));
-        }
-        return this.setTitle();
-    },
-
-    _HTMLbody: function (fields, pSize, icon, pageIdx, selectable) {
-        var h =[],
-            models = this.collection.models,
-            rMin = (pageIdx > 0) ? pageIdx * pSize : 0,
-            rMax = _.min([models.length, rMin + pSize]),
-            ico = icon ? (this.iconsPath || '') + icon : null;
-
-        if (rMax > 0) {
-            var route = this.getItemRoute();
-            for (var r = rMin; r < rMax; r++) {
-                this.HTMLItem(h, fields, models[r], ico, selectable, route);
-            }
-        }
-        return h.join('');
-    },
-
-    _render: function (models) {
-        alert('_render must be overridden');
-    },
-
-    _HTMLField: function (f, v) {
-        if(f.type==='formula'){
-            var fv = '<div class="disabled evo-rdonly evol-ellipsis">';
-            if(f.formula && this.model){
-                fv+=f.formula(this.model);
-            }
-            fv+='</div>';
-            return fv;
-        }else{
-            return eDico.fieldHTML_RO(f, v, Evol.hashLov, this.iconsPath || '');
-        }
-    },
-
-    _HTMLCheckbox: function (cid) {
-        return dom.input.checkbox2(cid, false, 'list-sel');
-    },
-    /*
-     customize: function () {
-         var labels = this.$('th>span');
-         if(this._custOn){
-            labels.find('i').remove();
-         }else{
-            labels.append(dom.iconCustomize('id', 'field'));
-         }
-         this._custOn=!this._custOn;
-         return this;
-     },*/
-
-    setCollection: function (collection) {
-        this.collection = collection;
-        return this.render();
-    },
-
-    getCollection: function () {
-        return this.collection;
-    },
-
-    setFilter: function (filter) {
-        this._filter = filter;
-        return this;
-    },
-
-    getFilter: function () {
-        return this._filter;
-    },
-
-    setTitle: function (title){
-        return eDico.setViewTitle(this, title||this.getTitle());
-    },
-
-    getTitle: function () {
-        // -- returns a string like "Contacts list"
-        return Evol.Format.capitalize(this.uiModel.namePlural) + ' ' + this.viewName;
-    },
-
-    getFields: function () {
-        if (!this._fields) {
-            this._fields = Evol.Def.getFields(this.uiModel, this.fieldsetFilter);
-            this._fieldHash = {};
-            var fh = this._fieldHash;
-            _.each(this._fields, function (f) {
-                fh[f.id] = f;
-            });
-        }
-        return this._fields;
-    },
-
-    getField: function (fid) {
-        if (!this._fieldHash) {
-            this.getFields();
-        }
-        return this._fieldHash[fid];
-    },
-
-    setPage: function (pageIdx) {
-        var h = [],
-            fields = this.getFields(),
-            pSize = this.pageSize,
-            collecLength = this.collection.length,
-            pSummary = this._pageSummary(pageIdx, pSize, collecLength);
-
-        this._$body().html(this._HTMLbody(fields, pSize, this.uiModel.icon, pageIdx, this.selectable));
-        this.$('.evo-pagination').html(this._HTMLpaginationBody(pageIdx, pSize, collecLength));
-        this.$('.evo-many-summary').html(pSummary);
-        this.pageIndex = pageIdx;
-        this.$el.trigger('status', pSummary);
-        return this;
-    },
-
-    getPage: function () {
-        return this.pageIndex;
-    },
-
-    _$Selection: function () {
-        return this.$('.list-sel:checked').not('[data-id="cbxAll"]');
-    },
-
-    getSelection: function () {
-        if (this.selectable) {
-            return _.map(this._$Selection().toArray(), function (cbx) {
-                return $(cbx).data('id');
-            });
-        }
-        return [];
-    },
-
-    setSelection: function (sel) {
-        // - param: sel = array of ids like ['1','2']
-        if (this.selectable && sel.length > 0) {
-            // TODO optimize and uncheck prev checked
-            var selector = [];
-            _.each(sel, function (id) {
-                selector.push('[data-mid=' + id + '] .list-sel');
-            });
-            this.$(selector.join(',')).prop('checked', true);
-        }
-        return this;
-    },
-
-    pageSummary: function(){
-        return this._pageSummary(this.pageIndex, this.pageSize, this.collection.length);
-    },
-
-    _pageSummary: function (pIdx, pSize, cSize) {
-        if (cSize === 0) {
-            return '';
-        } else if (cSize === 1) {
-            return cSize + ' ' + this.uiModel.name;
-        } else if (pSize >= cSize) {
-            return cSize + ' ' + this.uiModel.namePlural;
-        } else {
-            var rangeBegin = (pIdx || 0) * pSize + 1, rangeEnd;
-            if (pIdx < 1) {
-                rangeEnd = _.min([pSize, cSize]);
-            } else {
-                rangeEnd = _.min([rangeBegin + pSize - 1, cSize]);
-            }
-            return i18n.range
-                .replace('{0}', rangeBegin)
-                .replace('{1}', rangeEnd)
-                .replace('{2}', cSize)
-                .replace('{3}', this.uiModel.namePlural);
-        }
-    },
-
-    _HTMLpagination: function (pIdx, pSize, cSize) {
-        if (cSize > pSize) {
-            return '<ul class="evo-pagination pagination pagination-sm">'+
-                this._HTMLpaginationBody(pIdx, pSize, cSize)+
-                '</ul>';
-        }
-        return '';
-    },
-
-    _HTMLpaginationBody: function (pIdx, pSize, cSize) {
-        var h='';
-        if (cSize > pSize) {
-            var nbPages = Math.ceil(cSize / pSize),
-                pId = pIdx + 1,
-                maxRange,
-                bPage = function(id){
-                    h+='<li'+(pId===id?' class="active"':'')+
-                        ' data-id="'+id+'"><a href="javascript:void(0)">'+id+'</a></li>';
-                },
-                bPageRange = function(pStart, pEnd){
-                    for (var i=pStart; i<=pEnd; i++) {
-                        bPage(i);
-                    }
-                },
-                bGap = function(){
-                    h+='<li class="disabled"><a href="javascript:void(0)">...</a></li>';
-                };
-            h+='<li data-id="prev"'+
-                ((pId===1)?' class="disabled"':'')+
-                '><a href="javascript:void(0)">&laquo;</a></li>';
-            bPage(1);
-            if(pId>4 && nbPages>6){
-                if(pId===5){
-                    bPage(2);
-                }else{
-                    bGap();
-                }
-                maxRange=_.min([pId+2, nbPages]);
-                bPageRange(_.max([2, pId-2]), maxRange);
-            }else{
-                maxRange=_.min([_.max([5, pId+2]), nbPages]);
-                bPageRange(2, maxRange);
-            }
-            if(maxRange<nbPages && pId+2<nbPages){
-                bGap();
-                bPage(nbPages);
-            }
-            h+='<li data-id="next"'+
-                ((nbPages > pId) ? '' : ' class="disabled"')+
-                '><a href="javascript:void(0)">&raquo;</a></li>';
-        }
-        return h;
-    },
-
-    sortList: function (f, down, noRemember, noTrigger) {
-        var collec = this.collection,
-            fts = Evol.Def.fieldTypes;
-        if (!_.isUndefined(collec)) {
-            var sel = this.getSelection();
-            if (f.type == fts.text || f.type == fts.textml || f.type == fts.email) {
-                collec.comparator = eDico.bbComparatorText(f.id);
-            }  else if (f.type === fts.formula) {
-                collec.comparator = eDico.bbComparatorFormula(f.id, f.formula);
-            } else {
-                collec.comparator = eDico.bbComparator(f.id);
-            }
-            collec.sort();
-            if (down) {
-                collec.models.reverse();
-            }
-            this.setPage(0);
-            var direction = down ? 'down' : 'up';
-            if (!noRemember) {
-                localStorage.setItem(this.uiModel.id + '-sort', f.id + '-' + direction);
-            }
-            this.setSelection(sel);
-            if (!noTrigger) {
-                this.$el.trigger('sort.many', {id: f.id, direction: direction});
-            }
-        }
-        return this;
-    },
-
-    getItemRoute: function () {
-        if (this.router) {
-            return '#' + this.uiModel.id + '/browse/';
-        }
-        return null;
-    },
-
-    click_navigate: function (evt) {
-        var id = $(evt.currentTarget).closest('[data-mid]').data('mid');
-        evt.type = 'navigate.many';
-        this.$el.trigger(evt, {id: id});
-    },
-
-    click_pagination: function (evt) {
-        this.$el.trigger('paginate.many', {id: $(evt.currentTarget).closest('li').data('id')});
-    },
-    /*
-     click_customize: function (evt) {
-         var $e=$(evt.currentTarget),
-             id=$e.data('id'),
-             eType=$e.data('type');
-
-         eDico.showDesigner(id, eType, $e);
-         this.$el.trigger(eType+'.customize', {id: id, type:eType});
-     },
-     */
-    click_selection: function (evt) {
-        //if($(evt.currentTarget).data('id')!=='cbxAll'){
-        this.$el.trigger('selection.many');
-        //}
-    },
-
-    click_checkall: function (evt) {
-        var isChecked = this.$('[data-id="cbxAll"]').prop('checked');
-        //this.$('.list-sel:checked').not('[data-id="cbxAll"]');
-        this.$('.list-sel').prop('checked', isChecked);
-        this.$el.trigger('selection.many');
-    }
-
-});
-
-}();
-;
-/*! ***************************************************************************
- *
- * evolutility :: many-bubbles.js
+ * evolutility-ui-jquery :: many-bubbles.js
  *
  * View "many bubbles" to show a Bubble Chart of a collection of many models.
  *
- * https://github.com/evoluteur/evolutility
+ * https://github.com/evoluteur/evolutility-ui-jquery
  * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
@@ -2457,7 +2463,7 @@ Evol.ViewMany.Bubbles = Evol.View_Many.extend({
                 uiModel: this.uiModel,
                 tooltip: function(d){
                     var h=[],
-                    flds=that.getFields();//(h, fields, model, icon, selectable, route, isTooltip)
+                    flds=that.getFields();
                     Evol.ViewMany.Cards.prototype.HTMLItem.call(that, h, flds, new Backbone.Model(d), null, null, null, true);
                     return h.join('');
                 }
@@ -2575,11 +2581,11 @@ Evol.ViewMany.Bubbles = Evol.View_Many.extend({
 ;
 /*! ***************************************************************************
  *
- * evolutility :: many-cards.js
+ * evolutility-ui-jquery :: many-cards.js
  *
  * View "many cards" to show a collection as many cards.
  *
- * https://github.com/evoluteur/evolutility
+ * https://github.com/evoluteur/evolutility-ui-jquery
  * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
@@ -2638,6 +2644,8 @@ Evol.ViewMany.Cards = Evol.View_Many.extend({
                 v = '<a href="#'+route+model.id+'">'+
                     that._HTMLField(f, model.escape(f.attribute || f.id))+
                     '</a>';
+            }else if(f.type===fts.json){
+                v = model.get(f.attribute || f.id);
             }else{
                 v = that._HTMLField(f, model.escape(f.attribute || f.id));
             }
@@ -2722,11 +2730,11 @@ Evol.ViewMany.Cards = Evol.View_Many.extend({
 ;
 /*! ***************************************************************************
  *
- * evolutility :: many-charts.js
+ * evolutility-ui-jquery :: many-charts.js
  *
  * View "many charts" to display a collection as a set of charts.
  *
- * https://github.com/evoluteur/evolutility
+ * https://github.com/evoluteur/evolutility-ui-jquery
  * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
@@ -2893,11 +2901,11 @@ return Evol.View_Many.extend({
 ;
 /*! ***************************************************************************
  *
- * evolutility :: many-list.js
+ * evolutility-ui-jquery :: many-list.js
  *
  * View "many list" to display a collection as a list (table w/ sorting and paging).
  *
- * https://github.com/evoluteur/evolutility
+ * https://github.com/evoluteur/evolutility-ui-jquery
  * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
@@ -2925,7 +2933,7 @@ Evol.ViewMany.List = Evol.View_Many.extend({
             link = (this.links!==false);
 
         h+='<div class="evol-many-list">'+
-            '<table class="table table-bordered'+(link?' table-hover':'')+'"><thead><tr>';
+            '<div><table class="table table-bordered'+(link?' table-hover':'')+'"><thead><tr>';
         if(this.selectable){
             h+='<th class="list-td-sel">'+this._HTMLCheckbox('cbxAll')+'</th>';
         }
@@ -2934,7 +2942,7 @@ Evol.ViewMany.List = Evol.View_Many.extend({
         });
         h+='</tr></thead><tbody>'+
             this._HTMLbody(fields, pSize, this.uiModel.icon, 0, this.selectable)+
-            '</tbody></table>'+
+            '</tbody></table></div>'+
             this._HTMLpagination(0, pSize, models.length)+
             '<div class="evo-many-summary">'+this.pageSummary(this.pageIndex, pSize, models.length)+'</div>'+
             '</div>';
@@ -2962,7 +2970,7 @@ Evol.ViewMany.List = Evol.View_Many.extend({
                 v = input.colorBox(f.id, model.escape(f.attribute || f.id));
             }else if(f.type===ft.formula){
                 v = input.formula(null, f, model);
-            }else if(f.type===ft.html){
+            }else if(f.type===ft.json || f.type===ft.html){
                 v = model.get(f.attribute || f.id);
                 //if(v && v.length>200){
                     //v = v.subString(0,200)+'...';
@@ -3060,11 +3068,11 @@ Evol.ViewMany.List = Evol.View_Many.extend({
 ;
 /*! ***************************************************************************
  *
- * evolutility :: one.js
+ * evolutility-ui-jquery :: one.js
  *
  * View "one" should not be instanciated but inherited.
  *
- * https://github.com/evoluteur/evolutility
+ * https://github.com/evoluteur/evolutility-ui-jquery
  * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
@@ -3222,9 +3230,9 @@ return Backbone.View.extend({
             _.each(this.getFields(), function (f) {
                 $f=that.$field(f.id);
                 if(isModel){
-                    fv=model.get(f.attribute || f.id);
+                    fv=model.get(f.attribute || f.id)||'';
                 }else{
-                    fv=model[f.attribute || f.id];
+                    fv=model[f.attribute || f.id]||'';
                 }
                 if(f.readonly){
                     switch(f.type){
@@ -3243,6 +3251,7 @@ return Backbone.View.extend({
                         case fts.url:
                         case fts.email:
                         case fts.list:
+                        case fts.lov:
                             $f.html(eDico.fieldHTML_RO(f, _.isUndefined(fv)?'':fv, Evol.hashLov, iconsPath) + ' ');
                             break;
                         case fts.formula:
@@ -3252,7 +3261,7 @@ return Backbone.View.extend({
                             $f.html(uiInput.colorBox(f.id, fv, fv));
                             break;
                         case fts.json:
-                            $f.val(Evol.Format.jsonString(fv, true));
+                            $f.val(Evol.Format.jsonString(fv, false));
                             break;
                         default:
                             $f.text(eDico.fieldHTML_RO(f, _.isUndefined(fv)?'':fv, Evol.hashLov, iconsPath) + ' ');
@@ -3697,20 +3706,37 @@ return Backbone.View.extend({
 
     _renderPanelList: function (h, p, mode) {
         var isEditable = p.readonly?false:(mode!=='browse'),
-            vMode=isEditable?mode:'browse';
+            vMode=isEditable?mode:'browse',
+            fts=eDef.fieldTypes;
+
+        function _th(h, e){
+            if(e.type===fts.pix){
+                h.push('<th class="evo-col-pix">');
+            }else{
+                h.push('<th>');
+            }
+            h.push(e.label+((isEditable && e.required)?dom.html.required:'')+'</th>');
+        }
 
         h.push('<div style="width:'+p.width+'%" class="evol-pnl" data-pid="'+p.id+'">',
             dom.panelBegin(p, this.style, true),
-            '<table class="table" data-mid="'+(p.attribute || p.id)+'"><thead><tr>');
-        _.each(p.elements, function (elem) {
-            h.push('<th>'+elem.label+((isEditable && elem.required)?dom.html.required:'')+'</th>');
-        });
+            '<div class="evo-plist"><table class="table" data-mid="'+(p.attribute || p.id)+'"><thead><tr>');
+        
+        if(_.isArray(p.elements)){
+            _.each(p.elements, function (elem) {
+                _th(h, elem);
+            });
+        }else if(_.isObject(p.elements)){
+            for( var elem in p.elements){
+                _th(h, elements[elem]);
+            }
+        }
         if(vMode==='edit'){
             h.push('<th></th>');
         }
         h.push('</tr></thead><tbody>');
         this._renderPanelListBody(h, p, null, vMode);
-        h.push('</tbody></table>',
+        h.push('</tbody></table></div>',
             dom.panelEnd(),
             '</div>');
         return this;
@@ -3780,11 +3806,15 @@ return Backbone.View.extend({
             fv = (mode !== 'new') ? this.model.get(f.id) : f.defaultValue || '';
         }
         if(f.type===fts.formula){
-            h.push(Evol.Dico.HTMLFieldLabel(f, mode || 'edit')+
-                dom.input.formula(this.fieldViewId(f.id), f, this.model));
-        }else if(f.type===fts.json && mode==='browse'){
-            h.push(Evol.Dico.HTMLFieldLabel(f, mode)+
-                dom.input.textM(this.fieldViewId(f.id), Evol.Format.jsonString(fv, false), f.maxLen, f.height, true));
+            if(!skipLabel){
+                h.push(Evol.Dico.HTMLFieldLabel(f, mode || 'edit'));
+            }
+            h.push(dom.input.formula(this.fieldViewId(f.id), f, this.model));
+        }else if(f.type===fts.json && (mode==='browse' || f.readOnly)){
+            if(!skipLabel){
+                h.push(Evol.Dico.HTMLFieldLabel(f, mode));
+            }
+            h.push(dom.input.textM(this.fieldViewId(f.id), Evol.Format.jsonString(fv, false), f.maxLen, f.height, true));
         }else{
             h.push(eDico.fieldHTML(f, this.fieldViewId(f.id), fv, mode, iconsPath, skipLabel));
         }
@@ -3806,7 +3836,11 @@ return Backbone.View.extend({
     setTitle: function (title){
         var bdg=this.uiModel.fnBadge;
         if(bdg){
-            bdg=bdg(this.model);
+            if(_.isString(bdg)){
+                bdg=this.model.escape(bdg)||'';
+            }else{
+                bdg=bdg(this.model);
+            }
         }
         return eDico.setViewTitle(this, title, bdg);
     },
@@ -3830,7 +3864,7 @@ return Backbone.View.extend({
                     scInvalid = 0;
                 _.each(scData, function(rowData, idx){
                     _.each(sc.elements, function(f){
-                        if(that.validateField(f, rowData[f.id].substring(0,10))){
+                        if(that.validateField(f, (f.type==='date') ? (rowData[f.id]?rowData[f.id].substring(0,10):'') : rowData[f.id])){
                             trs.eq(idx).find('#'+f.id).parent().addClass('has-error');
                             scInvalid++;
                         }
@@ -4219,11 +4253,11 @@ return Backbone.View.extend({
 ;
 /*! ***************************************************************************
  *
- * evolutility :: one-browse.js
+ * evolutility-ui-jquery :: one-browse.js
  *
  * View "one browse" to browse one model in readonly mode.
  *
- * https://github.com/evoluteur/evolutility
+ * https://github.com/evoluteur/evolutility-ui-jquery
  * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
@@ -4346,11 +4380,11 @@ Evol.ViewOne.Browse = Evol.View_One.extend({
 ;
 /*! ***************************************************************************
  *
- * evolutility :: one-edit.js
+ * evolutility-ui-jquery :: one-edit.js
  *
  * View "one edit" to edit one backbone model.
  *
- * https://github.com/evoluteur/evolutility
+ * https://github.com/evoluteur/evolutility-ui-jquery
  * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
@@ -4379,11 +4413,11 @@ Evol.ViewOne.Edit = Evol.View_One.extend({
 ;
 /*! ***************************************************************************
  *
- * evolutility :: one-json.js
+ * evolutility-ui-jquery :: one-json.js
  *
  * View "one json" to edit one backbone model in JSON.
  *
- * https://github.com/evoluteur/evolutility
+ * https://github.com/evoluteur/evolutility-ui-jquery
  * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
@@ -4473,11 +4507,11 @@ Evol.ViewOne.JSON = Evol.View_One.extend({
 ;
 /*! ***************************************************************************
  *
- * evolutility :: one-mini.js
+ * evolutility-ui-jquery :: one-mini.js
  *
  * View "one mini" to "quick edit" one backbone model (only showing important or required fields).
  *
- * https://github.com/evoluteur/evolutility
+ * https://github.com/evoluteur/evolutility-ui-jquery
  * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
@@ -4550,9 +4584,9 @@ return Evol.ViewOne.Edit.extend({
 ;
 /*! ***************************************************************************
  *
- * evolutility :: action-export.js
+ * evolutility-ui-jquery :: action-export.js
  *
- * https://github.com/evoluteur/evolutility
+ * https://github.com/evoluteur/evolutility-ui-jquery
  * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
@@ -4730,8 +4764,8 @@ return Backbone.View.extend({
             options = params.options,
             maxItem = this.sampleMaxSize-1;
 
-        if(this.model && this.model.collection){
-            var data = this.model.collection.models,
+        if(this.collection || (this.model && this.model.collection)){
+            var data = this.collection ? this.collection.models : this.model.collection.models,
                 fldsDomHash = {};
 
             _.each(params.fields, function(fid){
@@ -4990,7 +5024,7 @@ return Backbone.View.extend({
                             h+=f.id+'="';
                             if(f.type===fts.text || f.type===fts.textml){
                                 fv=m.get(f.id);
-                                if(!_.isArray(fv) && !_.isUndefined(fv)){
+                                if(!_.isArray(fv) && !_.isUndefined(fv) && fv!==''){
                                     h+=fv.replace(/"/g, '\\"');
                                 }
                             }else{
@@ -5130,9 +5164,9 @@ return Backbone.View.extend({
 ;
 /*! ***************************************************************************
  *
- * evolutility :: action-filter.js
+ * evolutility-ui-jquery :: action-filter.js
  *
- * https://github.com/evoluteur/evolutility
+ * https://github.com/evoluteur/evolutility-ui-jquery
  * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
@@ -5208,13 +5242,13 @@ return Backbone.View.extend({
             h='';
 
         h+=dom.html.buttonClose+'<div class="evo-zfilters"></div>'+
-            '<a class="evo-bNew btn btn-primary" href="javascript:void(0)">'+evoLang.bNewCond+'</a>';
+            '<a class="evo-bNew btn btn-primary btn-group-sm glyphicon glyphicon-plus" href="javascript:void(0)"></a>';// '+evoLang.bNewCond+'
         if(this.submitButton){
-            h+='<a class="evo-bSubmit btn btn-primary" href="javascript:void(0)">'+evoLang.bSubmit+'</a>';
+            h+='<a class="evo-bSubmit btn btn-primary glyphicon glyphicon-ok" href="javascript:void(0)"></a>';// '+evoLang.bSubmit+'
         }
         h+='<div class="evo-editFilter"></div>'+
-            '<a class="evo-bAdd btn btn-primary" style="display:none;" href="javascript:void(0)">'+evoLang.bAddCond+'</a>'+
-            '<a class="evo-bDel btn btn-default" style="display:none;" href="javascript:void(0)">'+evoLang.bCancel+'</a>';
+            '<a class="evo-bAdd btn btn-primary glyphicon glyphicon-ok" style="display:none;" href="javascript:void(0)"></a>'+// '+evoLang.bAddCond+'
+            '<a class="evo-bDel btn btn-default glyphicon glyphicon-remove" style="display:none;" href="javascript:void(0)"></a>';// '+evoLang.bCancel+'
         e.html(h);
         this._step=0;
         if(this.submitReady){
@@ -5427,7 +5461,7 @@ return Backbone.View.extend({
                     h='<select id="field" class="form-control"><option value=""></option>';
                 for (var i=0,iMax=fields.length;i<iMax;i++){
                     f=fields[i];
-                    h+=uiInput.option(f.id, f.label || f.labelList);
+                    h+=uiInput.option(f.id, f.label || f.labelList || ('('+f.id+')'));
                 }
                 h+='</select>';
                 this._fList=h;
@@ -5472,8 +5506,8 @@ return Backbone.View.extend({
                                     fOption(fOps.sNotEqual, evoLang.sNotOn);
                             }
                             h+=fOption(fOps.sGreater, evoLang.sAfter)+
-                                fOption(fOps.sSmaller, evoLang.sBefore)+
-                                fOption(fOps.sBetween, evoLang.sBetween);
+                                fOption(fOps.sSmaller, evoLang.sBefore);//+
+                                //fOption(fOps.sBetween, evoLang.sBetween 
                             break;
                         case fts.int:
                         case fts.dec:
@@ -5772,9 +5806,9 @@ return Backbone.View.extend({
 ;
 /*! ***************************************************************************
  *
- * evolutility :: action-import.js
+ * evolutility-ui-jquery :: action-import.js
  *
- * https://github.com/evoluteur/evolutility
+ * https://github.com/evoluteur/evolutility-ui-jquery
  * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
@@ -6041,11 +6075,11 @@ return Backbone.View.extend({
 ;
 /*! ***************************************************************************
  *
- * evolutility :: toolbar.js
+ * evolutility-ui-jquery :: toolbar.js
  *
  * View "toolbar" (one toolbar instance manages all views for a UI model).
  *
- * https://github.com/evoluteur/evolutility
+ * https://github.com/evoluteur/evolutility-ui-jquery
  * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
@@ -6726,7 +6760,6 @@ return Backbone.View.extend({
                 var updatedModel = this.getData(true);
                 this.model.set(updatedModel);
                 this.model.save(this.model.changedAttributes(), {
-                    patch: !Evol.Config.localStorage,
                     success: function(m){
                         fnSuccess(m);
                         that.collection.set(m, {remove:false});
@@ -7178,11 +7211,11 @@ return Backbone.View.extend({
 ;
 /*! ***************************************************************************
  *
- * evolutility :: app.js
+ * evolutility-ui-jquery :: app.js
  *
  * View "app" to manage the single page app for all objects/ui-models.
  *
- * https://github.com/evoluteur/evolutility
+ * https://github.com/evoluteur/evolutility-ui-jquery
  * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
@@ -7341,7 +7374,7 @@ Evol.App = Backbone.View.extend({
 
         if(Evol.Config){
             if(Evol.Config.localStorage){
-                var lc = new Backbone.LocalStorage(this.prefix+uiModel.id);
+                var lc = new Backbone.LocalStorage(this.prefix+(uiModel.table || uiModel.id));
                 M = Backbone.Model.extend({
                     localStorage: lc
                 });

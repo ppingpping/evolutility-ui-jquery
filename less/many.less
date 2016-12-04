@@ -1,6 +1,6 @@
-//  evolutility : many.css
+//  Evolutility-UI-jQuery :: many.css
 
-//  https://github.com/evoluteur/evolutility
+//  https://github.com/evoluteur/evolutility-ui-jquery
 //  Copyright (c) 2016 Olivier Giulieri
 
 /* --- list --- */
@@ -11,43 +11,51 @@
 
 .evol-many-list{
 
-  > .table {
+  > div {
+    overflow-x: auto;
+    overflow-y: hidden;
+    > .table {
 
-    img {
-      max-height: 60px;
-      padding:0;
-    }
-    tr{
-      transition: all 0.3s ease;
-    }
-    td{
-      position: relative;
-    }
-    th {
-      font-weight: @weight-label !important;
-      background-color: @toolbar-background-color;
+      margin-bottom: 0;
 
-      .glyphicon {
-        display:none;
-        position:absolute;
-        opacity: .8;
-        margin-left: 6px;
-        background-color: white;
-        cursor: pointer;
-        width:22px;
-        height: 22px;
+      textarea{
+        min-width:200px;
       }
 
-      &:hover .glyphicon {
-        display: inline !important;
+      img {
+        max-height: 60px;
+        padding:0;
       }
+      tr{
+        transition: all 0.3s ease;
+      }
+      td{
+        position: relative;
+      }
+      th {
+        font-weight: @weight-label !important;
+        background-color: @toolbar-background-color;
 
-    }
-    .evol-ellipsis{
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      max-width: 120px;
+        .glyphicon {
+          display:none;
+          position:absolute;
+          opacity: .8;
+          margin-left: 6px;
+          background-color: white;
+          cursor: pointer;
+          width:22px;
+          height: 22px;
+        }
+
+        &:hover .glyphicon {
+          display: inline !important;
+        }
+
+      }
+      .evol-ellipsis{
+        .ellipsis();
+        max-width: 120px;
+      }
     }
   }
 
@@ -106,7 +114,9 @@
   width:30px;
 }
 
-
+.evo-col-pix{
+  width: 100px;
+}
 // from Bootstrap normalize.less (only pieces needed for Evolutility views)
 /*! normalize.css v3.0.2 | MIT License | git.io/normalize */
 

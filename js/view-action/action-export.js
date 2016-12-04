@@ -1,8 +1,8 @@
 /*! ***************************************************************************
  *
- * evolutility :: action-export.js
+ * evolutility-ui-jquery :: action-export.js
  *
- * https://github.com/evoluteur/evolutility
+ * https://github.com/evoluteur/evolutility-ui-jquery
  * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
@@ -180,8 +180,8 @@ return Backbone.View.extend({
             options = params.options,
             maxItem = this.sampleMaxSize-1;
 
-        if(this.model && this.model.collection){
-            var data = this.model.collection.models,
+        if(this.collection || (this.model && this.model.collection)){
+            var data = this.collection ? this.collection.models : this.model.collection.models,
                 fldsDomHash = {};
 
             _.each(params.fields, function(fid){
@@ -440,7 +440,7 @@ return Backbone.View.extend({
                             h+=f.id+'="';
                             if(f.type===fts.text || f.type===fts.textml){
                                 fv=m.get(f.id);
-                                if(!_.isArray(fv) && !_.isUndefined(fv)){
+                                if(!_.isArray(fv) && !_.isUndefined(fv) && fv!==''){
                                     h+=fv.replace(/"/g, '\\"');
                                 }
                             }else{

@@ -1,10 +1,10 @@
 /*! ***************************************************************************
  *
- * evolutility :: toolbar.js
+ * evolutility-ui-jquery :: toolbar.js
  *
  * View "toolbar" (one toolbar instance manages all views for a UI model).
  *
- * https://github.com/evoluteur/evolutility
+ * https://github.com/evoluteur/evolutility-ui-jquery
  * Copyright (c) 2016 Olivier Giulieri
  *
  *************************************************************************** */
@@ -685,7 +685,6 @@ return Backbone.View.extend({
                 var updatedModel = this.getData(true);
                 this.model.set(updatedModel);
                 this.model.save(this.model.changedAttributes(), {
-                    patch: !Evol.Config.localStorage,
                     success: function(m){
                         fnSuccess(m);
                         that.collection.set(m, {remove:false});
