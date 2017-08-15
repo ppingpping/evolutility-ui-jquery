@@ -5,16 +5,17 @@
 
 /* --- charts --- */
 .evol-many-charts{
-	.flex-holder();
+	@include flex-holder();
 }
 .evol-chart-holder{
-	.flex-item();
+	@include flex-item();
 	position: relative;
 	text-align: center;
 	background-color :#FFFFFF;
 	margin:10px 10px 10px 5px;
 	width: 400px;
 	min-height:286px;
+	border-color: $color-border;
 }
 .chart-holder{
 	>label{
@@ -24,6 +25,7 @@
 .evol-chart-title{
 	text-align:center;
 	padding:10px 20px 30px;
+	font-weight: 400;
 }
 /*
 .evo-chart-table{

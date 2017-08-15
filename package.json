@@ -1,6 +1,6 @@
 {
   "name": "evolutility-ui-jquery",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "copyright": "(c) 2017 Olivier Giulieri",
   "license": "MIT",
   "target": "dist",
@@ -12,15 +12,18 @@
   },
   "bugs": "https://github.com/evoluteur/evolutility-ui-jquery/issues",
   "resolutions": {
-    "jquery": "3.1.1"
+    "jquery": "3.2.1"
+  },
+  "dependencies": {
+    "bootstrap-sass": "^3.3.7"
   },
   "devDependencies": {
     "grunt": "~1.0.1",
     "grunt-contrib-concat": "~1.0.1",
-    "grunt-contrib-uglify": "~2.0.0",
-    "grunt-contrib-less": "~1.4.0",
     "grunt-contrib-copy": "~1.0.0",
-    "grunt-contrib-jshint": "~1.1.0"
+    "grunt-contrib-jshint": "~1.1.0",
+    "grunt-contrib-uglify": "~2.0.0",
+    "grunt-sass": "^2.0.0"
   },
   "keywords": [
       "model",
