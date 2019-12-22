@@ -36,7 +36,7 @@ function createSampleDataIfEmpty(entityName){
             localStorage: lc
         });
     }else{
-        M = new Backbone.Model({
+        M = Backbone.Model.extend({
             urlRoot: Evol.Config.url+entityName
         });
         Ms = Backbone.Collection.extend({
@@ -77,6 +77,11 @@ function hideUIModel(){
 }
 
 function showApp(entity, view){
-    $('#title').html(uiModels[entity].label);
-    window.location.href = '#'+entity+'/'+(view||'list');
+    var m=uiModels[entity];
+    if(m){
+        $('#title').html(m.label);
+        window.location.href = '#'+entity+'/'+(view||'list');
+    }else{
+        alert('App not defined "'+entity+'".');
+    }
 }
