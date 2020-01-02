@@ -1,4 +1,5 @@
-# Evolutility-UI-jQuery
+# Evolutility-UI-jQuery &middot; [![GitHub license](https://img.shields.io/github/license/evoluteur/evolutility-ui-jquery)](https://github.com/evoluteur/evolutility-ui-jquery/blob/master/LICENSE.md) [![npm version](https://img.shields.io/npm/v/evolutility-ui-jquery)](https://www.npmjs.com/package/evolutility-ui-jquery) 
+
 
 Evolutility-UI-jQuery provides a set of generic Backbone Views to browse, edit, filter, export and chart Backbone models and collections of different structures.
 With it you can make web applications by configuring views with metadata instead of hand-coding templates, Javascript and CSS.
@@ -23,6 +24,14 @@ Sample Single Page Apps made with Evolutility:
 # To get the latest stable version, use git from the command line.
 git clone https://github.com/evoluteur/evolutility-ui-jquery
 ```
+
+or use the [npm package](https://www.npmjs.com/package/evolutility-ui-jquery):
+
+```bash
+# To get the latest stable version, use npm from the command line.
+npm install evolutility-ui-jquery
+```
+
 
 By default, Evolutility-UI-jQuery is configured use localStorage for storing data. To make it work with a REST API:
 
@@ -364,6 +373,6 @@ The (beginning of a) [documentation](http://evoluteur.github.io/evolutility-ui-j
 
 ## License
 
-Copyright (c) 2019 [Olivier Giulieri](https://evoluteur.github.io/).
+Copyright (c) 2020 [Olivier Giulieri](https://evoluteur.github.io/).
 
 Evolutility-UI-jQuery is released under the [MIT license](http://github.com/evoluteur/evolutility-ui-jquery/blob/master/LICENSE.md).
